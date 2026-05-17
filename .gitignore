@@ -3,6 +3,7 @@ node_modules/
 
 # Build outputs (Vite)
 dist/
+dist-ssr/
 .vite/
 build/
 out/
@@ -61,3 +62,14 @@ Thumbs.db
 
 # Misc local nested node_modules
 node_modules/**/node_modules/
+
+# Test output
+test-results/
+playwright-report/
+coverage/
+
+# Windows-specific
+desktop.ini
+
+# Source maps (keep out of git for security)
+*.js.map
