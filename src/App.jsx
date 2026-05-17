@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Cpu, TrendingUp, Activity, DollarSign, AlertTriangle, ShieldCheck,
-  Landmark, Star, CheckCircle, X, ChevronRight, ArrowLeft, Info,
-  Package, Globe2, Target, BarChart3, Zap, Building2,
+  Landmark, CheckCircle, X, ChevronRight, ArrowLeft, Info,
+  Package, Globe2, Target, BarChart3, Zap,
   Bookmark, Printer, BookOpen, Pencil, Share2, ClipboardList, Clock, Users,
 } from 'lucide-react';
 import {
@@ -98,7 +98,11 @@ function filterAllocation(rows, region) {
   if (region === 'Baku Only') filtered = rows.filter(r => r.city === 'Baku');
   else if (region === 'Baku + Sumgayit') filtered = rows.filter(r => r.city === 'Baku' || r.city === 'Sumgayit');
   const total = filtered.reduce((s, r) => s + r.pct, 0);
-  return filtered.map(r => ({ ...r, pct: Math.round(r.pct / total * 100) }));
+  const mapped = filtered.map(r => ({ ...r, pct: Math.round(r.pct / total * 100) }));
+  // correct rounding drift so percentages always sum to exactly 100
+  const drift = 100 - mapped.reduce((s, r) => s + r.pct, 0);
+  if (drift !== 0 && mapped.length > 0) mapped[0] = { ...mapped[0], pct: mapped[0].pct + drift };
+  return mapped;
 }
 
 const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -152,7 +156,7 @@ function computeResults(form) {
     if (p.format === form.format)       score += 10;
     if (p.shelfLife === form.shelfLife) score += 10;
     return { ...p, score };
-  }).sort((a, b) => b.score - a.score);
+  }).sort((a, b) => b.score - a.score || a.id - b.id);
 
   const baseline   = scored[0];
   const matchScore = baseline.score;
@@ -492,9 +496,15 @@ function AnimatedNumber({ target, duration = 1300 }) {
 function DispatchMatrix({ rows }) {
   const [widths, setWidths] = useState(rows.map(() => 0));
   useEffect(() => {
-    rows.forEach((_, i) =>
-      setTimeout(() => setWidths(prev => prev.map((w, j) => j === i ? rows[i].pct : w)), i * 130)
+    setWidths(rows.map(() => 0));
+    const timers = rows.map((_, i) =>
+      setTimeout(() => setWidths(prev => {
+        const next = [...prev];
+        next[i] = rows[i].pct;
+        return next;
+      }), i * 130)
     );
+    return () => timers.forEach(clearTimeout);
   }, [rows]);
   return (
     <div className="space-y-4">
@@ -566,9 +576,15 @@ function AzMapViz({ allocRows }) {
 function ScoreBars({ bars, color }) {
   const [widths, setWidths] = useState(bars.map(() => 0));
   useEffect(() => {
-    bars.forEach((_, i) =>
-      setTimeout(() => setWidths(prev => prev.map((w, j) => j === i ? bars[i].pct : w)), i * 120)
+    setWidths(bars.map(() => 0));
+    const timers = bars.map((_, i) =>
+      setTimeout(() => setWidths(prev => {
+        const next = [...prev];
+        next[i] = bars[i].pct;
+        return next;
+      }), i * 120)
     );
+    return () => timers.forEach(clearTimeout);
   }, [bars]);
   return (
     <div className="space-y-2.5">
@@ -823,49 +839,6 @@ function FinancingModal({ product, workingCapital, onClose, onSubmit, vendorForm
 
 const SCREENS = { S1:'s1', S2:'s2', S3:'s3', S4:'s4', PULSE:'pulse', DASH:'dash', MANAGER:'manager', COMPARE:'compare' };
 
-const STEP_CONTEXT = [
-  {
-    heading: 'What you\'ll get',
-    items: [
-      { Icon: BarChart3,  text: 'KNN demand forecast vs 10 analog SKUs' },
-      { Icon: Target,     text: 'Launch Viability Score out of 100' },
-      { Icon: TrendingUp, text: '8-month demand curve with confidence band' },
-      { Icon: Cpu,        text: 'Gemini AI market intelligence report' },
-    ],
-    footerLabel: 'Bravo Network',
-    footerStats: ['67 stores nationwide', 'Baku · Sumgayit · Ganja', '2.4M+ monthly shoppers'],
-  },
-  {
-    heading: 'Why it matters',
-    items: [
-      { Icon: Package,    text: 'Storage type sets your working capital floor' },
-      { Icon: Activity,   text: 'Shelf life determines spoilage risk and markdown schedule' },
-      { Icon: BarChart3,  text: 'Format drives EOQ batch sizing and safety stock' },
-    ],
-    footerLabel: 'Bravo Supply Chain',
-    footerStats: ['Cold chain across all 67 stores', '48h restocking cycle in Baku', '2–4 week vendor lead times'],
-  },
-  {
-    heading: 'Azerbaijan market',
-    items: [
-      { Icon: Globe2,     text: 'Baku: 2.4M residents · largest consumer market' },
-      { Icon: TrendingUp, text: 'Modern retail growing ~9% YoY since 2022' },
-      { Icon: Star,       text: 'Nowruz + summer = two major demand spikes per year' },
-    ],
-    footerLabel: 'Channel mix',
-    footerStats: ['Modern retail 58%', 'Traditional bazaar 28%', 'E-commerce 14%'],
-  },
-  {
-    heading: 'Partnership tiers',
-    items: [
-      { Icon: Building2,  text: 'Pilot Listing — up to 3 stores, trial phase' },
-      { Icon: Globe2,     text: 'Regional Vendor — all Baku stores + co-marketing' },
-      { Icon: Star,       text: 'Strategic Partner — 67 stores + shelf analytics' },
-    ],
-    footerLabel: 'Decision timeline',
-    footerStats: ['Application: instant', 'Review: 3 business days', 'Onboarding: 2–4 weeks'],
-  },
-];
 
 // ─── Live Preview (replaces static PreviewPanel) ──────────────────────────
 
@@ -885,7 +858,7 @@ function LivePreview({ form }) {
         </div>
         <div className="mt-auto pt-5 border-t border-zinc-100">
           <div className="space-y-1.5">
-            {['67 stores · 5 locations', 'KNN across 10 analog SKUs', 'Gemini AI market report'].map((s,i) => (
+            {['67 stores · 5 locations', 'KNN across 10 analog SKUs', 'AI market intelligence'].map((s,i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
                 <span className="text-xs text-zinc-400">{s}</span>
@@ -962,64 +935,9 @@ function LivePreview({ form }) {
 
 // ─── Live Estimate Strip (steps 1-3 top bar) ───────────────────────────────
 
-function LiveEstimateStrip({ form }) {
-  if (!form?.name?.trim() || !form?.price || parseFloat(form?.price) <= 0) return null;
-  try {
-    const p = computeResults(form);
-    return (
-      <div className="bg-white border border-zinc-200 rounded-md p-3 mb-4">
-        <div className="flex items-center gap-1.5 mb-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Live Estimate</span>
-        </div>
-        <div className="grid grid-cols-3 gap-1 text-center divide-x divide-zinc-100">
-          {[
-            { val: p.launchScore.total,    sub: 'Score /100' },
-            { val: p.predictedTotal >= 1000 ? `${(p.predictedTotal/1000).toFixed(0)}k` : p.predictedTotal, sub: 'Units/mo' },
-            { val: p.projectedRevenue >= 1000 ? `${(p.projectedRevenue/1000).toFixed(0)}k` : p.projectedRevenue, sub: 'AZN/mo' },
-          ].map(({ val, sub }) => (
-            <div key={sub}>
-              <div className="text-base font-black text-zinc-900 leading-none">{val}</div>
-              <div className="text-xs text-zinc-400 mt-0.5">{sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  } catch { return null; }
-}
 
 function RightPanel({ step, liveData }) {
-  if (step === 0) return <LivePreview form={liveData} />;
-  const ctx = STEP_CONTEXT[step];
-  if (!ctx) return null;
-  return (
-    <div className={PANEL_CLS}>
-      <LiveEstimateStrip form={liveData} />
-      <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">{ctx.heading}</div>
-      <div className="space-y-3.5 flex-1">
-        {ctx.items.map(({ Icon, text }, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded bg-white border border-zinc-200 flex items-center justify-center shrink-0">
-              <Icon className="w-3 h-3 text-blue-700" />
-            </div>
-            <p className="text-xs text-zinc-600 leading-relaxed pt-0.5">{text}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-6 pt-5 border-t border-zinc-200">
-        <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2.5">{ctx.footerLabel}</div>
-        <div className="space-y-1.5">
-          {ctx.footerStats.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
-              <span className="text-xs text-zinc-500">{s}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  return <LivePreview form={liveData} />;
 }
 
 const HEX_FIELDS = [
@@ -1388,7 +1306,7 @@ export default function App() {
                 <SelectField label="Bravo Vendor Status" value={form.bankRelation} onChange={v => set('bankRelation', v)} opts={['None','Existing Vendor (1-2 SKUs)','Active Vendor (3+ SKUs)','Strategic Partner']} />
                 <SelectField label="Launch Budget Available" value={form.launchBudget} onChange={v => set('launchBudget', v)} opts={['< 20K AZN','20–50K AZN','50–200K AZN','200K+ AZN']} />
               </div>
-              <button onClick={submit}
+              <button onClick={() => submit()}
                 className="w-full mt-5 bg-blue-700 text-white font-semibold py-2.5 rounded-md hover:bg-blue-800 transition-colors duration-150 flex items-center justify-center gap-2 text-sm">
                 <Cpu className="w-4 h-4" /> Synthesize DNA & Run Forecast
               </button>
@@ -1406,8 +1324,9 @@ export default function App() {
         {screen === SCREENS.DASH && res && (() => {
           const sc  = scoreCfg[res.launchScore.level];
           const risk = riskCfg[res.riskLevel.level];
-          const liveVolume   = Math.max(1, Math.round(res.baseline.baseSales * Math.pow(livePrice / res.baseline.basePrice, res.elasticity) * res.channelMult));
-          const liveRevenue  = Math.round(liveVolume * livePrice);
+          const safeLivePrice = livePrice > 0 ? livePrice : res.newPrice;
+          const liveVolume   = Math.max(1, Math.round(res.baseline.baseSales * Math.pow(safeLivePrice / res.baseline.basePrice, res.elasticity) * res.channelMult));
+          const liveRevenue  = Math.round(liveVolume * safeLivePrice);
           const liveDiff     = liveVolume - res.predictedTotal;
           const scoreBars = [
             { label:'Product Fit',        pts: res.launchScore.productFit,        max:30, pct: Math.round(res.launchScore.productFit / 30 * 100) },
@@ -1609,7 +1528,7 @@ export default function App() {
                   <div className="flex items-center gap-2 mb-4">
                     <Cpu className="w-4 h-4 text-blue-700" />
                     <div className="font-semibold text-zinc-900 text-sm">AI Market Intelligence</div>
-                    <span className="text-xs text-zinc-400">· Powered by Gemini</span>
+                    <span className="text-xs text-zinc-400">· Market Intelligence Engine</span>
                     {res.aiLoading && <span className="text-xs text-zinc-400 animate-pulse ml-auto">Generating...</span>}
                   </div>
                   {res.aiLoading ? (
@@ -1627,7 +1546,7 @@ export default function App() {
                       <div>
                         <div className="text-xs font-medium text-zinc-500 mb-1.5">Key Risks</div>
                         <ul className="space-y-1">
-                          {res.aiInsights.risks.map((r,i) => (
+                          {(res.aiInsights.risks || []).map((r,i) => (
                             <li key={i} className="flex gap-2 text-xs text-zinc-600">
                               <span className="text-red-400 shrink-0">•</span>{r}
                             </li>
@@ -1670,7 +1589,7 @@ export default function App() {
                       )}
                     </div>
                     <div className="flex items-center gap-4">
-                      {[{c:'#94a3b8',dash:true,l:`${res.baseline.name}`},{c:'#1d4ed8',l:`${form.name}`}].map(({c,dash,l})=>(
+                      {[{c:'#94a3b8',dash:true,l:`KNN Analog (${res.baseline.name})`},{c:'#1d4ed8',l:`${form.name}`}].map(({c,dash,l})=>(
                         <div key={l} className="flex items-center gap-1.5">
                           <div className="w-5 border-t border-zinc-300" style={{ borderColor:c, borderStyle:dash?'dashed':'solid', borderWidth:dash?undefined:'2px' }} />
                           <span className="text-xs text-zinc-500">{l}</span>
@@ -1765,7 +1684,7 @@ export default function App() {
                     <div className="font-semibold text-zinc-900 text-sm">Competitor Positioning</div>
                     <SectionInfo text="Price vs. estimated volume scatter for your product (blue), the 3 closest KNN analogs (grey), and the competitor you entered (red). Top-left = high volume at low price (strong position). Hover each dot for details." />
                     <div className="ml-auto flex items-center gap-4 shrink-0">
-                      {[{c:'#94a3b8',l:'Analogs'},{c:'#1d4ed8',l:form.name},{...(res.compGap ? {c:'#dc2626',l:'Competitor'} : null)}].filter(Boolean).map(({c,l})=>(
+                      {[{c:'#94a3b8',l:'Analogs'},{c:'#1d4ed8',l:form.name},...(res.compGap ? [{c:'#dc2626',l:'Competitor'}] : [])].map(({c,l})=>(
                         <div key={l} className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5 rounded-full" style={{ background:c }} />
                           <span className="text-xs text-zinc-500 truncate max-w-[90px]">{l}</span>
@@ -1819,7 +1738,7 @@ export default function App() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs text-zinc-400">Simulated Price</span>
-                        <span className="text-xl font-black text-blue-700">{livePrice.toFixed(2)} <span className="text-sm font-medium text-zinc-400">AZN</span></span>
+                        <span className="text-xl font-black text-blue-700">{safeLivePrice.toFixed(2)} <span className="text-sm font-medium text-zinc-400">AZN</span></span>
                       </div>
                       <input
                         type="range"
@@ -1862,8 +1781,8 @@ export default function App() {
                         </div>
                         <div className="text-center">
                           <div className="text-xs text-zinc-400 mb-1">Price Δ</div>
-                          <div className={`text-2xl font-black leading-none ${livePrice === res.newPrice ? 'text-zinc-400' : livePrice > res.newPrice ? 'text-red-600' : 'text-green-600'}`}>
-                            {livePrice === res.newPrice ? '—' : `${livePrice > res.newPrice ? '+' : ''}${((livePrice / res.newPrice - 1) * 100).toFixed(0)}%`}
+                          <div className={`text-2xl font-black leading-none ${safeLivePrice === res.newPrice ? 'text-zinc-400' : safeLivePrice > res.newPrice ? 'text-red-600' : 'text-green-600'}`}>
+                            {safeLivePrice === res.newPrice ? '—' : `${safeLivePrice > res.newPrice ? '+' : ''}${((safeLivePrice / res.newPrice - 1) * 100).toFixed(0)}%`}
                           </div>
                           <div className="text-xs text-zinc-400 mt-0.5">from original</div>
                         </div>
@@ -2109,7 +2028,7 @@ export default function App() {
                   <div className="flex items-center gap-2 mb-4">
                     <Landmark className="w-4 h-4 text-blue-700" />
                     <div className="font-semibold text-zinc-900 text-sm">Bravo Vendor Intelligence</div>
-                    <SectionInfo text="Working Capital = units needed to cover safety stock × unit cost × storage multiplier (Ambient 2.1×, Chilled 2.6×, Frozen 3.2×). Partnership tier is recommended based on your revenue, experience, and PashaBank relationship. Financed Growth shows how Bravo's supply-chain credit line unlocks additional inventory capacity." />
+                    <SectionInfo text="Working Capital = units needed to cover safety stock × unit cost × storage multiplier (Ambient 2.1×, Chilled 2.6×, Frozen 3.2×). Partnership tier is recommended based on your revenue, years in business, and existing Bravo vendor status. Financed Growth shows how Bravo's supply-chain credit line unlocks additional inventory capacity." />
                     <span className="text-xs text-zinc-400 ml-1">·</span>
                     <span className="text-xs text-zinc-400">Partnership Engine</span>
                   </div>
@@ -2295,7 +2214,7 @@ export default function App() {
                                   {row.fmt(val, s.r)}
                                 </span>
                                 {isBest  && <span className="ml-2 text-xs text-green-500 font-medium">best</span>}
-                                {isWorst && <span className="ml-2 text-xs text-red-400 font-medium">lowest</span>}
+                                {isWorst && <span className="ml-2 text-xs text-red-400 font-medium">{row.bestHigh === false ? 'highest' : 'lowest'}</span>}
                               </div>
                             );
                           })}
