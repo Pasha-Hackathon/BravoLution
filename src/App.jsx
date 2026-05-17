@@ -4,6 +4,7 @@ import {
   Cpu, TrendingUp, Activity, DollarSign, AlertTriangle, ShieldCheck,
   Landmark, Star, CheckCircle, X, ChevronRight, ArrowLeft, Info,
   Package, Globe2, Target, BarChart3, Zap, Building2,
+  Bookmark, Printer, BookOpen,
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -57,6 +58,17 @@ const ALLOCATIONS = {
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+const REGION_STORES = { 'Baku Only': 32, 'Baku + Sumgayit': 41, 'National': 67 };
+
+function getShelfPlacement(category, tier, storage) {
+  if (storage === 'Chilled (+4°C)' || storage === 'Frozen (-18°C)')
+    return 'Chilled/Frozen Aisle · Dedicated Section';
+  if (category === 'Electronics') return 'Electronics Zone · Near Customer Service';
+  if (tier === 'Premium' || tier === 'Luxury') return 'Eye Level · Entrance Zone · Feature End Cap';
+  if (tier === 'Economy') return 'Bottom Shelf · Bulk Section · Value Aisle';
+  return 'Mid Shelf · High-Traffic Aisle · Category Block';
+}
 
 function filterAllocation(rows, region) {
   let filtered = rows;
@@ -133,27 +145,47 @@ function computeResults(form) {
     { attr:'Shelf Life',  pts: form.shelfLife === baseline.shelfLife ? 10 : 0,     max:10 },
   ];
 
+  // Category-specific price elasticity
+  const ELASTICITY = {
+    'Food & Beverage': -0.65, 'Personal Care': -0.45,
+    'Home Care & Cleaning': -0.40, 'Electronics': -0.22,
+  };
+  const elasticity = ELASTICITY[form.category] || -0.50;
+
+  // Channel demand multiplier
+  const CHANNEL_MULT = {
+    'Modern Retail': 1.00, 'Hybrid': 1.08,
+    'E-commerce': 0.82, 'Traditional/Bazaar': 0.74,
+  };
+  const channelMult = CHANNEL_MULT[form.channel] || 1.00;
+  const channelLabel = channelMult !== 1.00
+    ? `${form.channel} ${channelMult > 1 ? '+' : ''}${Math.round((channelMult - 1) * 100)}%`
+    : form.channel;
+
   // Forecast
   const priceGapPercent = ((newPrice - baseline.basePrice) / baseline.basePrice) * 100;
-  const predictedTotal  = Math.max(1, Math.round(baseline.baseSales * (1 + (priceGapPercent / 100) * -0.5)));
+  const predictedTotal  = Math.max(1, Math.round(
+    baseline.baseSales * (1 + (priceGapPercent / 100) * elasticity) * channelMult
+  ));
   const errorRate       = parseFloat((Math.abs(priceGapPercent) * 0.08 + 1.9 + (100 - matchScore) * 0.03).toFixed(1));
   const confidence      = parseFloat((100 - errorRate).toFixed(1));
   const projectedRevenue = Math.round(predictedTotal * newPrice);
 
   // Risk
   const riskLevel =
-    baseline.shelfLife === 'Short (<7 Days)' ? { label:'HIGH',   sub:'Spoilage Risk',  level:'high'   }
+    form.shelfLife === 'Short (<7 Days)'     ? { label:'HIGH',   sub:'Spoilage Risk',  level:'high'   }
     : priceGapPercent > 25                   ? { label:'HIGH',   sub:'Overpriced',     level:'high'   }
     : priceGapPercent > 10                   ? { label:'MEDIUM', sub:'Watch Price',    level:'medium' }
     :                                          { label:'LOW',    sub:'Stable',         level:'low'    };
 
-  // EOQ / Procurement
+  // EOQ / Procurement — holding rate and lead time vary by storage type
   const annualDemand   = predictedTotal * 12;
   const orderingCost   = 45;
-  const holdingCost    = Math.max(0.01, newPrice * 0.22);
+  const holdingRates   = { 'Frozen (-18°C)': 0.35, 'Chilled (+4°C)': 0.28, 'Special Handling': 0.30, 'Ambient (Dry)': 0.22 };
+  const holdingCost    = Math.max(0.01, newPrice * (holdingRates[form.storage] || 0.22));
   const eoq            = Math.max(1, Math.round(Math.sqrt((2 * annualDemand * orderingCost) / holdingCost)));
   const demandStd      = Math.round(baseline.baseSales * 0.15);
-  const leadTimeWeeks  = 2;
+  const leadTimeWeeks  = { 'Frozen (-18°C)': 4, 'Chilled (+4°C)': 3, 'Special Handling': 3, 'Ambient (Dry)': 2 }[form.storage] || 2;
   const safetyStock    = Math.round(1.65 * demandStd * Math.sqrt(leadTimeWeeks));
   const rop            = Math.round((predictedTotal / 4) * leadTimeWeeks + safetyStock);
   const firstOrderQty  = eoq + safetyStock;
@@ -167,8 +199,9 @@ function computeResults(form) {
     ...a, units: Math.round(predictedTotal * a.pct / 100),
   }));
 
-  // Financing
-  const workingCapital = Math.round(predictedTotal * 0.15 * newPrice * 2.1);
+  // Financing — working capital multiplier varies by storage complexity
+  const wcMultipliers  = { 'Frozen (-18°C)': 3.2, 'Chilled (+4°C)': 2.6, 'Special Handling': 2.8, 'Ambient (Dry)': 2.1 };
+  const workingCapital = Math.round(predictedTotal * 0.15 * newPrice * (wcMultipliers[form.storage] || 2.1));
   const REGION_MULT = { 'Baku Only': 1.16, 'Baku + Sumgayit': 1.24, 'National': 1.38 };
   const COMP_MULT   = { 'Low (0-2 competitors)': 1.12, 'Medium (3-5 competitors)': 1.00, 'High (5+ competitors)': 0.88 };
   const BUDGET_MULT = { '< 20K AZN': 0.90, '20–50K AZN': 1.00, '50–200K AZN': 1.12, '200K+ AZN': 1.22 };
@@ -180,11 +213,15 @@ function computeResults(form) {
     : workingCapital < 100000 ? { name:'Regional Vendor Program',     desc:'All Baku stores · Co-marketing support · 12-month contract'   }
     :                           { name:'Strategic Supply Partner',    desc:'All Bravo locations · Dedicated shelf space · Analytics access' };
 
-  // Chart data
+  // Chart data — shape varies by seasonality
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
   const errF = errorRate / 100;
+  const seasonShape =
+    form.seasonality === 'Peak Season Product' ? [0.40, 0.55, 0.75, 0.92, 1.00, 0.95, 0.82, 0.68]
+    : form.seasonality === 'Seasonal Only'     ? [0.18, 0.32, 0.68, 1.00, 0.96, 0.58, 0.28, 0.14]
+    :                                            [0.25, 0.35, 0.45, 0.57, 0.67, 0.76, 0.88, 1.00];
   const chartData = months.map((month, i) => {
-    const pred = Math.round(predictedTotal * (0.25 + (i / 7) * 0.75) * (1 + Math.sin(i) * 0.03));
+    const pred = Math.round(predictedTotal * seasonShape[i] * (1 + Math.sin(i) * 0.02));
     return {
       month,
       Baseline:  Math.round(baseline.baseSales * (0.3 + (i / 7) * 0.7)),
@@ -205,11 +242,11 @@ function computeResults(form) {
   });
   const breakevenMonth = cashFlowData.findIndex(d => d.net >= 0) + 1;
 
-  // Price sensitivity
+  // Price sensitivity — uses category-specific elasticity and channel multiplier
   const sensitivityScenarios = [-0.10, 0, 0.10].map(delta => {
     const p   = newPrice * (1 + delta);
     const gap = ((p - baseline.basePrice) / baseline.basePrice) * 100;
-    const vol = Math.max(1, Math.round(baseline.baseSales * (1 + (gap / 100) * -0.5)));
+    const vol = Math.max(1, Math.round(baseline.baseSales * (1 + (gap / 100) * elasticity) * channelMult));
     return { delta, price: parseFloat(p.toFixed(2)), volume: vol, diff: vol - predictedTotal };
   });
 
@@ -223,8 +260,12 @@ function computeResults(form) {
   return {
     baseline, matchScore, topAnalogs, contributions,
     newPrice, priceGapPercent, predictedTotal, errorRate, confidence, projectedRevenue,
+    channelLabel,
     riskLevel, eoq, safetyStock, rop, firstOrderQty,
-    launchScore, allocRows, workingCapital, financingProduct, financedUnits, upliftPct,
+    launchScore, allocRows,
+    storeCount: REGION_STORES[form.region] || 67,
+    shelfPlacement: getShelfPlacement(form.category, form.tier, form.storage),
+    workingCapital, financingProduct, financedUnits, upliftPct,
     chartData, cashFlowData, breakevenMonth, sensitivityScenarios, seasonalMarkers,
     compGap,
   };
@@ -238,9 +279,9 @@ const LABEL = 'block text-sm font-medium text-zinc-700 mb-1.5';
 function Logo() {
   return (
     <div className="flex items-center gap-2">
-      <svg width="48" height="22" viewBox="0 0 48 22" fill="none" aria-label="Bravo">
-        <rect width="48" height="22" rx="4" fill="#00A550"/>
-        <text x="5" y="15.5" fontFamily="DM Sans,system-ui,sans-serif" fontWeight="800" fontSize="12" fill="white" letterSpacing="0.2">bravo</text>
+      <svg width="24" height="28" viewBox="0 0 26 30" fill="none" aria-label="Bravo">
+        <polygon points="13,0.5 25.6,7.75 25.6,22.25 13,29.5 0.4,22.25 0.4,7.75" fill="#009A44" />
+        <text x="13" y="18" textAnchor="middle" fontFamily="DM Sans,system-ui,sans-serif" fontWeight="900" fontSize="7" fill="white" letterSpacing="0.5">BRAVO</text>
       </svg>
       <span className="font-bold text-zinc-900 text-sm tracking-tight">Flow</span>
     </div>
@@ -470,6 +511,19 @@ function ScoreBars({ bars, color }) {
   );
 }
 
+// ─── Section Info Tooltip ──────────────────────────────────────────────────
+
+function SectionInfo({ text }) {
+  return (
+    <div className="relative group shrink-0">
+      <Info className="w-3 h-3 text-zinc-300 cursor-help" />
+      <div className="absolute left-0 top-5 w-72 bg-zinc-900 text-white text-xs rounded-md p-3 hidden group-hover:block z-30 shadow-lg leading-relaxed whitespace-normal">
+        {text}
+      </div>
+    </div>
+  );
+}
+
 // ─── Tooltips ──────────────────────────────────────────────────────────────
 
 function ChartTooltip({ active, payload, label }) {
@@ -574,11 +628,201 @@ function FinancingModal({ product, workingCapital, onClose }) {
 
 const SCREENS = { S1:'s1', S2:'s2', S3:'s3', S4:'s4', PULSE:'pulse', DASH:'dash' };
 
-function WizardCard({ children }) {
+const STEP_CONTEXT = [
+  {
+    heading: 'What you\'ll get',
+    items: [
+      { Icon: BarChart3,  text: 'KNN demand forecast vs 10 analog SKUs' },
+      { Icon: Target,     text: 'Launch Viability Score out of 100' },
+      { Icon: TrendingUp, text: '8-month demand curve with confidence band' },
+      { Icon: Cpu,        text: 'Gemini AI market intelligence report' },
+    ],
+    footerLabel: 'Bravo Network',
+    footerStats: ['67 stores nationwide', 'Baku · Sumgayit · Ganja', '2.4M+ monthly shoppers'],
+  },
+  {
+    heading: 'Why it matters',
+    items: [
+      { Icon: Package,    text: 'Storage type sets your working capital floor' },
+      { Icon: Activity,   text: 'Shelf life determines spoilage risk and markdown schedule' },
+      { Icon: BarChart3,  text: 'Format drives EOQ batch sizing and safety stock' },
+    ],
+    footerLabel: 'Bravo Supply Chain',
+    footerStats: ['Cold chain across all 67 stores', '48h restocking cycle in Baku', '2–4 week vendor lead times'],
+  },
+  {
+    heading: 'Azerbaijan market',
+    items: [
+      { Icon: Globe2,     text: 'Baku: 2.4M residents · largest consumer market' },
+      { Icon: TrendingUp, text: 'Modern retail growing ~9% YoY since 2022' },
+      { Icon: Star,       text: 'Nowruz + summer = two major demand spikes per year' },
+    ],
+    footerLabel: 'Channel mix',
+    footerStats: ['Modern retail 58%', 'Traditional bazaar 28%', 'E-commerce 14%'],
+  },
+  {
+    heading: 'Partnership tiers',
+    items: [
+      { Icon: Building2,  text: 'Pilot Listing — up to 3 stores, trial phase' },
+      { Icon: Globe2,     text: 'Regional Vendor — all Baku stores + co-marketing' },
+      { Icon: Star,       text: 'Strategic Partner — 67 stores + shelf analytics' },
+    ],
+    footerLabel: 'Decision timeline',
+    footerStats: ['Application: instant', 'Review: 3 business days', 'Onboarding: 2–4 weeks'],
+  },
+];
+
+function PreviewPanel() {
+  const bars = [
+    { label:'Product Fit',        pts:'22/30', pct:73 },
+    { label:'Market Timing',      pts:'15/25', pct:60 },
+    { label:'Financial Viability',pts:'14/25', pct:56 },
+    { label:'Supply Chain',       pts:'15/20', pct:75 },
+  ];
   return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-zinc-200 rounded-md shadow-sm w-full max-w-md p-7">
-        {children}
+    <div className="flex-1 border-l border-zinc-100 p-7 flex flex-col bg-zinc-50 rounded-r-md min-w-0">
+      <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Sample output</div>
+
+      {/* Mini launch score */}
+      <div className="bg-white border border-amber-200 rounded-md p-4 mb-3">
+        <div className="flex items-end justify-between mb-2">
+          <div className="flex items-end gap-1.5">
+            <span className="text-4xl font-black text-amber-600 leading-none">74</span>
+            <span className="text-sm text-zinc-400 mb-0.5">/100</span>
+          </div>
+          <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+            Viable with Mitigation
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          {bars.map(b => (
+            <div key={b.label}>
+              <div className="flex justify-between text-xs text-zinc-400 mb-0.5">
+                <span>{b.label}</span><span className="font-mono">{b.pts}</span>
+              </div>
+              <div className="h-1 bg-zinc-100 rounded-sm">
+                <div className="h-full bg-amber-400 rounded-sm" style={{ width:`${b.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mini KPI row */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-white border border-zinc-200 rounded-md p-3">
+          <div className="text-xs text-zinc-400 mb-1">Volume forecast</div>
+          <div className="text-lg font-black text-zinc-900 leading-none">14,200</div>
+          <div className="text-xs text-zinc-400 mt-0.5">units / month</div>
+        </div>
+        <div className="bg-white border border-zinc-200 rounded-md p-3">
+          <div className="text-xs text-zinc-400 mb-1">Model confidence</div>
+          <div className="text-lg font-black text-zinc-900 leading-none">94.1%</div>
+          <div className="text-xs text-zinc-400 mt-0.5">MAPE ±5.9%</div>
+        </div>
+      </div>
+
+      {/* Gemini pill */}
+      <div className="flex items-center gap-2 bg-white border border-zinc-200 rounded-md px-3 py-2">
+        <Cpu className="w-3 h-3 text-blue-700 shrink-0" />
+        <span className="text-xs text-zinc-500">Gemini AI market intelligence included</span>
+      </div>
+
+      <div className="mt-auto pt-5 border-t border-zinc-200 mt-5">
+        <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2.5">Bravo Network</div>
+        <div className="space-y-1.5">
+          {['67 stores nationwide', 'Baku · Sumgayit · Ganja', '2.4M+ monthly shoppers'].map((s, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+              <span className="text-xs text-zinc-500">{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RightPanel({ step }) {
+  if (step === 0) return <PreviewPanel />;
+  const ctx = STEP_CONTEXT[step];
+  if (!ctx) return null;
+  return (
+    <div className="flex-1 border-l border-zinc-100 p-7 flex flex-col bg-zinc-50 rounded-r-md min-w-0">
+      <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">{ctx.heading}</div>
+      <div className="space-y-3.5 flex-1">
+        {ctx.items.map(({ Icon, text }, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded bg-white border border-zinc-200 flex items-center justify-center shrink-0">
+              <Icon className="w-3 h-3 text-blue-700" />
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed pt-0.5">{text}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 pt-5 border-t border-zinc-200">
+        <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2.5">{ctx.footerLabel}</div>
+        <div className="space-y-1.5">
+          {ctx.footerStats.map((s, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+              <span className="text-xs text-zinc-500">{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const HEX_FIELDS = [
+  { x:'-3%', y:'-2%', s:170, fo:0.035, so:0.055, dur:12, d:0   },
+  { x:'90%', y:'-3%', s:155, fo:0.030, so:0.050, dur:11, d:1.8 },
+  { x:'-4%', y:'82%', s:160, fo:0.035, so:0.055, dur:13, d:3.2 },
+  { x:'88%', y:'80%', s:145, fo:0.030, so:0.048, dur:10, d:0.9 },
+  { x:'4%',  y:'35%', s:85,  fo:0.055, so:0.085, dur:8,  d:1.4 },
+  { x:'1%',  y:'62%', s:65,  fo:0.065, so:0.095, dur:7,  d:4.1 },
+  { x:'10%', y:'18%', s:50,  fo:0.070, so:0.100, dur:9,  d:2.6 },
+  { x:'87%', y:'32%', s:80,  fo:0.055, so:0.085, dur:8,  d:0.6 },
+  { x:'93%', y:'58%', s:60,  fo:0.065, so:0.095, dur:9,  d:3.5 },
+  { x:'82%', y:'15%', s:55,  fo:0.070, so:0.100, dur:7,  d:2.0 },
+  { x:'38%', y:'-1%', s:60,  fo:0.055, so:0.080, dur:10, d:0.3 },
+  { x:'55%', y:'93%', s:55,  fo:0.060, so:0.085, dur:8,  d:5.0 },
+];
+
+function HexBg() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {HEX_FIELDS.map((h, i) => (
+        <motion.div
+          key={i}
+          className="absolute"
+          style={{ left: h.x, top: h.y }}
+          animate={{ y: [0, -14, 0], rotate: [0, 4, 0] }}
+          transition={{ duration: h.dur, delay: h.d, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <svg width={h.s} height={Math.round(h.s * 1.15)} viewBox="0 0 26 30" fill="none">
+            <polygon
+              points="13,0.5 25.6,7.75 25.6,22.25 13,29.5 0.4,22.25 0.4,7.75"
+              fill="#009A44" fillOpacity={h.fo}
+              stroke="#009A44" strokeOpacity={h.so} strokeWidth="0.8"
+            />
+          </svg>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function WizardCard({ children, step = null }) {
+  return (
+    <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4 relative overflow-hidden">
+      <HexBg />
+      <div className={`relative z-10 bg-white border border-zinc-200 rounded-md shadow-sm w-full flex overflow-hidden ${step !== null ? 'max-w-3xl' : 'max-w-md'}`}>
+        <div className={`${step !== null ? 'w-[420px] shrink-0' : 'w-full'} p-7`}>
+          {children}
+        </div>
+        {step !== null && <RightPanel step={step} />}
       </div>
     </div>
   );
@@ -614,26 +858,71 @@ const BLANK = {
   bankRelation:'None', launchBudget:'20–50K AZN',
 };
 
+const DEMO_FORM = {
+  name:'AZ Energy Boost 250ml', price:'3.20',
+  category:'Food & Beverage', tier:'Premium',
+  format:'Single Serve (<250g/ml)', storage:'Ambient (Dry)',
+  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals',
+  region:'National', competition:'Medium (3-5 competitors)',
+  channel:'Modern Retail', seasonality:'Year-round', competitorPrice:'2.80',
+  revenue:'100K–500K AZN', yearsInBiz:'3–10 years',
+  bankRelation:'Active Vendor (3+ SKUs)', launchBudget:'50–200K AZN',
+};
+
+async function fetchAIInsights(form, results) {
+  try {
+    const resp = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ form, results }),
+    });
+    const data = await resp.json();
+    if (data.ok) return data.insights;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 const FADE = { initial:{opacity:0}, animate:{opacity:1}, exit:{opacity:0}, transition:{duration:0.2} };
 
 // ─── Main App ──────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [screen, setScreen] = useState(SCREENS.S1);
-  const [modal,  setModal]  = useState(false);
-  const [form,   setForm]   = useState(BLANK);
-  const [res,    setRes]    = useState(null);
+  const [screen,         setScreen]         = useState(SCREENS.S1);
+  const [modal,          setModal]          = useState(false);
+  const [form,           setForm]           = useState(BLANK);
+  const [res,            setRes]            = useState(null);
+  const [savedScenarios, setSavedScenarios] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('bfScenarios') || '[]'); } catch { return []; }
+  });
+  const [scenariosOpen,  setScenariosOpen]  = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const step1OK = form.name.trim() && form.price && parseFloat(form.price) > 0;
 
-  const submit = () => {
-    setRes(computeResults(form));
+  const submit = (overrideForm) => {
+    const f = overrideForm || form;
+    const computed = computeResults(f);
+    setRes({ ...computed, aiInsights: null, aiLoading: true });
     setScreen(SCREENS.PULSE);
     setTimeout(() => setScreen(SCREENS.DASH), 2750);
+    fetchAIInsights(f, computed).then(insights =>
+      setRes(prev => ({ ...prev, aiInsights: insights, aiLoading: false }))
+    );
   };
 
   const reset = () => { setScreen(SCREENS.S1); setRes(null); setForm(BLANK); };
+
+  const saveScenario = () => {
+    if (!res) return;
+    const entry = { id: Date.now(), label: form.name, form };
+    const updated = [entry, ...savedScenarios.filter(s => s.label !== form.name)].slice(0, 3);
+    setSavedScenarios(updated);
+    try { localStorage.setItem('bfScenarios', JSON.stringify(updated)); } catch {}
+  };
+
+  const loadScenario = (s) => { setScenariosOpen(false); submit(s.form); };
 
   const riskCfg = {
     high:   { bg:'bg-red-50   border-red-200',   text:'text-red-700',   Icon: AlertTriangle },
@@ -654,36 +943,48 @@ export default function App() {
         {/* ── Step 1 ── */}
         {screen === SCREENS.S1 && (
           <motion.div key="s1" {...FADE}>
-            <WizardCard>
+            <WizardCard step={0}>
               <WizardHeader />
               <StepDots current={0} />
               <div className="mb-5">
                 <div className="text-base font-semibold text-zinc-900 mb-0.5">Core Identity</div>
                 <p className="text-sm text-zinc-500">Product fundamentals and pricing</p>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className={LABEL}>Product Name</label>
-                  <input type="text" placeholder="e.g. AZ Energy Boost 250ml"
-                    value={form.name} onChange={e => set('name', e.target.value)} className={FIELD} />
-                </div>
-                <div>
-                  <label className={LABEL}>Proposed Price</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-400 pointer-events-none">AZN</span>
-                    <input type="number" step="0.01" min="0.01" placeholder="0.00"
-                      value={form.price} onChange={e => set('price', e.target.value)} className={`${FIELD} pl-11`} />
+              <form onSubmit={e => { e.preventDefault(); step1OK && setScreen(SCREENS.S2); }}>
+                <div className="space-y-4">
+                  <div>
+                    <label className={LABEL}>Product Name</label>
+                    <input type="text" placeholder="e.g. AZ Energy Boost 250ml"
+                      value={form.name} onChange={e => set('name', e.target.value)} className={FIELD} />
                   </div>
+                  <div>
+                    <label className={LABEL}>Proposed Price</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-400 pointer-events-none">AZN</span>
+                      <input type="number" step="0.01" min="0.01" placeholder="0.00"
+                        value={form.price} onChange={e => set('price', e.target.value)} className={`${FIELD} pl-11`} />
+                    </div>
+                  </div>
+                  <SelectField label="Category" value={form.category} onChange={v => set('category', v)} opts={['Food & Beverage','Home Care & Cleaning','Personal Care','Electronics']} />
+                  <SelectField label="Brand Tier" value={form.tier} onChange={v => set('tier', v)} opts={['Economy','Mass Market','Premium','Luxury']} />
                 </div>
-                <SelectField label="Category" value={form.category} onChange={v => set('category', v)} opts={['Food & Beverage','Home Care & Cleaning','Personal Care','Electronics']} />
-                <SelectField label="Brand Tier" value={form.tier} onChange={v => set('tier', v)} opts={['Economy','Mass Market','Premium','Luxury']} />
-              </div>
+                <button
+                  type="submit"
+                  disabled={!step1OK}
+                  className="w-full mt-5 bg-blue-700 text-white font-semibold py-2.5 rounded-md hover:bg-blue-800 transition-colors duration-150 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+                >
+                  Next: Logistics <ChevronRight className="w-4 h-4" />
+                </button>
+              </form>
               <button
-                onClick={() => step1OK && setScreen(SCREENS.S2)}
-                disabled={!step1OK}
-                className="w-full mt-5 bg-blue-700 text-white font-semibold py-2.5 rounded-md hover:bg-blue-800 transition-colors duration-150 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+                type="button"
+                onClick={() => {
+                  setForm(DEMO_FORM);
+                  submit(DEMO_FORM);
+                }}
+                className="w-full mt-2 text-zinc-400 hover:text-zinc-600 transition-colors text-xs py-1.5 text-center"
               >
-                Next: Logistics <ChevronRight className="w-4 h-4" />
+                Try demo →
               </button>
             </WizardCard>
           </motion.div>
@@ -692,7 +993,7 @@ export default function App() {
         {/* ── Step 2 ── */}
         {screen === SCREENS.S2 && (
           <motion.div key="s2" {...FADE}>
-            <WizardCard>
+            <WizardCard step={1}>
               <WizardHeader />
               <StepDots current={1} />
               <div className="mb-5">
@@ -719,7 +1020,7 @@ export default function App() {
         {/* ── Step 3 ── */}
         {screen === SCREENS.S3 && (
           <motion.div key="s3" {...FADE}>
-            <WizardCard>
+            <WizardCard step={2}>
               <WizardHeader />
               <StepDots current={2} />
               <div className="mb-5">
@@ -754,7 +1055,7 @@ export default function App() {
         {/* ── Step 4 ── */}
         {screen === SCREENS.S4 && (
           <motion.div key="s4" {...FADE}>
-            <WizardCard>
+            <WizardCard step={3}>
               <WizardHeader />
               <StepDots current={3} />
               <div className="mb-5">
@@ -795,7 +1096,7 @@ export default function App() {
             <motion.div key="dash" className="min-h-screen bg-zinc-50" {...FADE}>
 
               {/* Navbar */}
-              <div className="bg-white border-b border-zinc-200 h-12 px-5 flex items-center justify-between sticky top-0 z-20">
+              <div className="bg-white border-b border-zinc-200 h-12 px-5 flex items-center justify-between sticky top-0 z-20 no-print">
                 <div className="flex items-center gap-4">
                   <button onClick={reset} className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 transition-colors text-sm">
                     <ArrowLeft className="w-3.5 h-3.5" /> Start Over
@@ -804,8 +1105,43 @@ export default function App() {
                   <Logo />
                 </div>
                 <span className="text-sm font-medium text-zinc-700">{form.name}</span>
-                <div className="flex items-center gap-3">
-                  <AiBadge />
+                <div className="flex items-center gap-2">
+                  {/* Scenario saver */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setScenariosOpen(o => !o)}
+                      className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1.5 transition-colors"
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      Saved{savedScenarios.length > 0 && ` (${savedScenarios.length})`}
+                    </button>
+                    {scenariosOpen && (
+                      <div className="absolute right-0 top-9 bg-white border border-zinc-200 rounded-md shadow-lg w-56 z-40 overflow-hidden">
+                        <div className="px-3 py-2 border-b border-zinc-100 flex items-center justify-between">
+                          <span className="text-xs font-semibold text-zinc-500">Saved Scenarios</span>
+                          <button onClick={() => setScenariosOpen(false)}><X className="w-3 h-3 text-zinc-400" /></button>
+                        </div>
+                        {savedScenarios.length === 0 ? (
+                          <div className="px-3 py-3 text-xs text-zinc-400">No saved scenarios yet.</div>
+                        ) : (
+                          savedScenarios.map(s => (
+                            <button key={s.id} onClick={() => loadScenario(s)}
+                              className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-b-0">
+                              <div className="text-xs font-medium text-zinc-800 truncate">{s.label}</div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={saveScenario}
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1.5 transition-colors">
+                    <Bookmark className="w-3 h-3" /> Save
+                  </button>
+                  <button onClick={() => window.print()}
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1.5 transition-colors">
+                    <Printer className="w-3 h-3" /> Print
+                  </button>
                   <button onClick={() => setModal(true)} className="bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-800 transition-colors">
                     Request Vendor Listing
                   </button>
@@ -821,7 +1157,11 @@ export default function App() {
                 >
                   <div className="flex gap-8 items-start">
                     <div className="shrink-0">
-                      <div className={`text-6xl font-black leading-none ${sc.num}`}>{res.launchScore.total}</div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-zinc-400 font-medium">Launch Viability Score</span>
+                        <SectionInfo text="Composite 0–100 score across Product Fit (30pts), Market Timing (25pts), Financial Viability (25pts), and Supply Chain readiness (20pts). Scores ≥75 are Strong; 50–74 need mitigation; below 50 is high risk." />
+                      </div>
+                      <div className={`text-6xl font-black leading-none ${sc.num}`}><AnimatedNumber target={res.launchScore.total} duration={1500} /></div>
                       <div className="text-sm text-zinc-400 mt-1 font-mono">/100</div>
                       <div className={`mt-2 text-xs font-semibold px-2 py-0.5 rounded border ${sc.bg}`}>
                         {res.launchScore.verdict}
@@ -848,18 +1188,20 @@ export default function App() {
                     {
                       icon: TrendingUp, label:'Volume Forecast', color:'text-blue-700',
                       value: <><AnimatedNumber target={res.predictedTotal} /><span className="text-base font-medium text-zinc-400 ml-1">units</span></>,
-                      sub: `Analog: ${res.baseline.name}`,
+                      sub: `${res.channelLabel} · ${res.baseline.name}`,
+                      tooltip: `KNN demand forecast using ${res.baseline.name} as the closest analog. Category elasticity applied (${({'Food & Beverage':'-0.65','Personal Care':'-0.45','Home Care & Cleaning':'-0.40','Electronics':'-0.22'}[form.category]||'-0.50')}). Channel adjusts volume up or down.`,
                     },
                     {
                       icon: Activity, label:'Model Confidence', color:'text-blue-700',
                       value: <>{res.confidence}%</>,
                       sub: `MAPE ±${res.errorRate}%`,
-                      tooltip: 'Ensemble of KNN similarity, price elasticity regression, and demographic weighting',
+                      tooltip: 'Mean Absolute Percentage Error estimated from price gap size and KNN match quality. Higher match score + closer price = lower error = higher confidence.',
                     },
                     {
                       icon: DollarSign, label:'Projected Revenue', color:'text-green-700',
                       value: <><AnimatedNumber target={res.projectedRevenue} /><span className="text-base font-medium text-zinc-400 ml-1">AZN</span></>,
-                      sub: 'Over forecast period',
+                      sub: `${res.predictedTotal.toLocaleString()} units × ${res.newPrice.toFixed(2)} AZN`,
+                      tooltip: 'Predicted monthly gross revenue at forecast volume and your proposed price. Does not account for Bravo margin or promotional discounts.',
                     },
                     null,
                   ].map((card, i) => {
@@ -871,6 +1213,7 @@ export default function App() {
                           <div className="flex items-center gap-1.5 mb-2">
                             <RIcon className={`w-3.5 h-3.5 ${risk.text}`} />
                             <span className="text-xs text-zinc-500">Operational Risk</span>
+                            <SectionInfo text="HIGH if shelf life is short (<7 days) or price is >25% above analog. MEDIUM if price gap is 10–25%. LOW otherwise. Reflects the main operational threat to a successful launch." />
                           </div>
                           <div className={`text-2xl font-black ${risk.text}`}>{res.riskLevel.label}</div>
                           <div className="text-xs text-zinc-400 mt-1">{res.riskLevel.sub}</div>
@@ -900,13 +1243,81 @@ export default function App() {
                   })}
                 </div>
 
+                {/* SKU Cannibalization Warning */}
+                {res.matchScore >= 70 && (
+                  <motion.div className="border border-orange-200 bg-orange-50 rounded-md p-4 flex items-start gap-3"
+                    initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.19 }}>
+                    <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-semibold text-orange-800 mb-0.5">Potential Cannibalization Risk</div>
+                      <p className="text-xs text-orange-700 leading-relaxed">
+                        Your product matches <span className="font-medium">{res.baseline.name}</span> on {res.matchScore}% of attributes
+                        (currently ~{res.baseline.baseSales.toLocaleString()} units/month at Bravo).
+                        Expect demand overlap — consider differentiating on price, format, or target demographic before launch.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* AI Market Intelligence */}
+                <motion.div className="bg-white border border-zinc-200 rounded-md p-5"
+                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.21 }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Cpu className="w-4 h-4 text-blue-700" />
+                    <div className="font-semibold text-zinc-900 text-sm">AI Market Intelligence</div>
+                    <span className="text-xs text-zinc-400">· Powered by Gemini</span>
+                    {res.aiLoading && <span className="text-xs text-zinc-400 animate-pulse ml-auto">Generating...</span>}
+                  </div>
+                  {res.aiLoading ? (
+                    <div className="space-y-2">
+                      {[...Array(4)].map((_,i) => (
+                        <div key={i} className="h-3 bg-zinc-100 rounded animate-pulse" style={{width:`${88-i*12}%`}} />
+                      ))}
+                    </div>
+                  ) : res.aiInsights ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-xs font-medium text-zinc-500 mb-1.5">Market Opportunity</div>
+                        <p className="text-sm text-zinc-700 leading-relaxed">{res.aiInsights.opportunity}</p>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-zinc-500 mb-1.5">Key Risks</div>
+                        <ul className="space-y-1">
+                          {res.aiInsights.risks.map((r,i) => (
+                            <li key={i} className="flex gap-2 text-xs text-zinc-600">
+                              <span className="text-red-400 shrink-0">•</span>{r}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-zinc-500 mb-1.5">Pricing Advice</div>
+                        <p className="text-xs text-zinc-600 leading-relaxed">{res.aiInsights.pricing_advice}</p>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-zinc-500 mb-1.5">Market Timing</div>
+                        <p className="text-xs text-zinc-600 leading-relaxed">{res.aiInsights.market_timing}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="text-xs font-medium text-zinc-500 mb-1.5">Launch Strategy</div>
+                        <p className="text-xs text-zinc-600 leading-relaxed">{res.aiInsights.launch_strategy}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-400">AI insights unavailable. All forecast data above is complete.</p>
+                  )}
+                </motion.div>
+
                 {/* Demand Chart */}
                 <motion.div className="bg-white border border-zinc-200 rounded-md p-5"
                   initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.22 }}>
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="font-semibold text-zinc-900 text-sm">Demand Forecast — 8-Month Outlook</div>
-                      <div className="text-xs text-zinc-400 mt-0.5">Monthly unit volume with confidence interval</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold text-zinc-900 text-sm">Demand Forecast — 8-Month Outlook</div>
+                        <SectionInfo text="Blue line = your product's predicted monthly units. Grey dashed = the closest analog's historical baseline. The shaded band is a 95% confidence interval based on model error rate. Vertical markers show seasonal demand spikes for this category." />
+                      </div>
+                      <div className="text-xs text-zinc-400 mt-0.5">Monthly unit volume · confidence band · seasonal markers</div>
                     </div>
                     <div className="flex items-center gap-4">
                       {[{c:'#94a3b8',dash:true,l:`${res.baseline.name}`},{c:'#1d4ed8',l:`${form.name}`}].map(({c,dash,l})=>(
@@ -945,7 +1356,10 @@ export default function App() {
 
                 {/* Price Sensitivity */}
                 <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.27 }}>
-                  <div className="text-xs text-zinc-400 font-medium mb-2">Price Sensitivity Analysis</div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="text-xs text-zinc-400 font-medium">Price Sensitivity Analysis</div>
+                    <SectionInfo text="Shows how a ±10% price change affects predicted monthly volume, using category-specific price elasticity. A more negative elasticity (e.g. F&B −0.65) means volume changes more sharply with price than Electronics (−0.22)." />
+                  </div>
                   <div className="grid grid-cols-3 gap-3">
                     {res.sensitivityScenarios.map((s, i) => {
                       const isCurrent = i === 1;
@@ -972,13 +1386,44 @@ export default function App() {
                   </div>
                 </motion.div>
 
+                {/* Waste / Spoilage Callout */}
+                {form.shelfLife === 'Short (<7 Days)' && (
+                  <motion.div className="border border-amber-200 bg-amber-50 rounded-md p-5"
+                    initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.30 }}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertTriangle className="w-4 h-4 text-amber-600" />
+                      <div className="font-semibold text-amber-800 text-sm">Spoilage Management Protocol</div>
+                      <span className="text-xs text-amber-500 ml-1">· Short shelf life detected</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { days:'Day 1–3', label:'Full Price',     pct:100, color:'bg-green-500' },
+                        { days:'Day 4–5', label:'−15% markdown', pct:85,  color:'bg-yellow-400' },
+                        { days:'Day 6',   label:'−30% markdown', pct:70,  color:'bg-orange-400' },
+                        { days:'Day 7',   label:'−50% clearance',pct:50,  color:'bg-red-400'    },
+                      ].map(s => (
+                        <div key={s.days} className="bg-white border border-amber-100 rounded-md p-3">
+                          <div className="font-semibold text-zinc-700 text-xs mb-1">{s.days}</div>
+                          <div className="text-zinc-500 text-xs mb-2">{s.label}</div>
+                          <div className="h-1 bg-zinc-100 rounded-sm">
+                            <div className={`h-full rounded-sm ${s.color}`} style={{ width:`${s.pct}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Model Intelligence — Analogs + Contributions */}
                 <motion.div className="grid grid-cols-2 gap-3"
                   initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.30 }}>
 
                   {/* Top Analogs */}
                   <div className="bg-white border border-zinc-200 rounded-md p-5">
-                    <div className="font-semibold text-zinc-900 text-sm mb-3">Top 3 Analog SKUs</div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="font-semibold text-zinc-900 text-sm">Top 3 Analog SKUs</div>
+                      <SectionInfo text="The three most similar products in Bravo's catalog, ranked by attribute match score (max 100pts). The #1 analog's monthly sales become the demand baseline for your forecast. Higher score = more reliable prediction." />
+                    </div>
                     <div className="space-y-3">
                       {res.topAnalogs.map((a, i) => (
                         <div key={a.name}>
@@ -1002,19 +1447,25 @@ export default function App() {
 
                   {/* Attribute Contributions */}
                   <div className="bg-white border border-zinc-200 rounded-md p-5">
-                    <div className="font-semibold text-zinc-900 text-sm mb-3">Attribute Contribution</div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="font-semibold text-zinc-900 text-sm">Attribute Contribution</div>
+                      <SectionInfo text="Breakdown of which 6 product attributes matched the top analog. Full bar = matched (score gained). Faint 'no match' = attribute differs. More matched attributes = more accurate demand forecast." />
+                    </div>
                     <div className="space-y-2.5">
                       {res.contributions.map(c => (
                         <div key={c.attr}>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs text-zinc-500">{c.attr}</span>
-                            <span className={`text-xs font-semibold ${c.pts > 0 ? 'text-blue-700' : 'text-zinc-300'}`}>
-                              +{c.pts}/{c.max}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {c.pts === 0 && <span className="text-xs text-zinc-300 italic">no match</span>}
+                              <span className={`text-xs font-semibold ${c.pts > 0 ? 'text-blue-700' : 'text-zinc-300'}`}>
+                                +{c.pts}/{c.max}
+                              </span>
+                            </div>
                           </div>
                           <div className="h-1 bg-zinc-100 rounded-sm">
                             <div className={`h-full rounded-sm ${c.pts > 0 ? 'bg-blue-700' : 'bg-zinc-200'}`}
-                              style={{ width:`${c.pts > 0 ? 100 : 30}%`, opacity: c.pts > 0 ? 1 : 0.4 }} />
+                              style={{ width:`${c.pts > 0 ? 100 : 20}%`, opacity: c.pts > 0 ? 1 : 0.35 }} />
                           </div>
                         </div>
                       ))}
@@ -1029,8 +1480,11 @@ export default function App() {
                   <div className="bg-white border border-zinc-200 rounded-md p-5">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <div className="font-semibold text-zinc-900 text-sm">Dispatch Matrix</div>
-                        <div className="text-xs text-zinc-400 mt-0.5">{form.region} · {res.allocRows.length} locations</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-semibold text-zinc-900 text-sm">Dispatch Matrix</div>
+                          <SectionInfo text="Recommended unit allocation across Bravo store clusters, filtered to your chosen launch region. Allocation percentages are based on demographic match between target customer and store catchment area." />
+                        </div>
+                        <div className="text-xs text-zinc-400 mt-0.5">{form.region} · {res.storeCount} stores · {res.allocRows.length} priority locations</div>
                       </div>
                       <Globe2 className="w-4 h-4 text-zinc-300" />
                     </div>
@@ -1040,7 +1494,10 @@ export default function App() {
                   <div className="bg-white border border-zinc-200 rounded-md p-5">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <div className="font-semibold text-zinc-900 text-sm">Cash Flow Projection</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-semibold text-zinc-900 text-sm">Cash Flow Projection</div>
+                          <SectionInfo text="Investment (red bars) = inventory purchasing cost, peaking in M1–M2. Revenue (blue bars) = sales income growing month-over-month. The black net line crosses zero at the breakeven point — the month you start recovering your investment." />
+                        </div>
                         <div className="text-xs text-zinc-400 mt-0.5">
                           6-month impact · Breakeven: {res.breakevenMonth > 0 && res.breakevenMonth <= 6 ? `M${res.breakevenMonth}` : 'M6+'}
                         </div>
@@ -1076,22 +1533,26 @@ export default function App() {
                   initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.37 }}>
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="font-semibold text-zinc-900 text-sm">Procurement Intelligence</div>
-                      <div className="text-xs text-zinc-400 mt-0.5">EOQ model · 95% service level · 2-week lead time</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold text-zinc-900 text-sm">Procurement Intelligence</div>
+                        <SectionInfo text="Economic Order Quantity model minimising total holding + ordering cost. Lead time varies by storage: Ambient 2wk, Chilled 3wk, Frozen 4wk. Safety stock provides a 95% service level buffer against demand spikes." />
+                      </div>
+                      <div className="text-xs text-zinc-400 mt-0.5">EOQ model · 95% service level · {({'Frozen (-18°C)':'4-week','Chilled (+4°C)':'3-week','Special Handling':'3-week'}[form.storage]||'2-week')} lead time</div>
                     </div>
                     <Package className="w-4 h-4 text-zinc-300" />
                   </div>
                   <div className="grid grid-cols-4 gap-4">
                     {[
-                      { label:'Safety Stock',     value: res.safetyStock,    unit:'units' },
-                      { label:'Reorder Point',    value: res.rop,            unit:'units' },
-                      { label:'Economic Order Qty',value: res.eoq,           unit:'units' },
-                      { label:'First Order Rec.', value: res.firstOrderQty,  unit:'units' },
-                    ].map(({label, value, unit}) => (
+                      { label:'Safety Stock',      hint:'95% service level buffer',  value: res.safetyStock,   unit:'units' },
+                      { label:'Reorder Point',     hint:'Place order when stock hits', value: res.rop,          unit:'units' },
+                      { label:'Economic Order Qty',hint:'Min-cost replenishment batch', value: res.eoq,         unit:'units' },
+                      { label:'First Order Rec.',  hint:'EOQ + safety stock combined', value: res.firstOrderQty,unit:'units' },
+                    ].map(({label, hint, value, unit}) => (
                       <div key={label} className="border-l border-zinc-100 pl-4 first:border-l-0 first:pl-0">
                         <div className="text-xs text-zinc-400 mb-1">{label}</div>
                         <div className="text-xl font-black text-zinc-900">{value.toLocaleString()}</div>
                         <div className="text-xs text-zinc-400">{unit}</div>
+                        <div className="text-xs text-zinc-300 mt-1 leading-tight">{hint}</div>
                       </div>
                     ))}
                   </div>
@@ -1103,12 +1564,14 @@ export default function App() {
                   <div className="flex items-center gap-2 mb-4">
                     <Landmark className="w-4 h-4 text-blue-700" />
                     <div className="font-semibold text-zinc-900 text-sm">Bravo Vendor Intelligence</div>
+                    <SectionInfo text="Working Capital = units needed to cover safety stock × unit cost × storage multiplier (Ambient 2.1×, Chilled 2.6×, Frozen 3.2×). Partnership tier is recommended based on your revenue, experience, and PashaBank relationship. Financed Growth shows how Bravo's supply-chain credit line unlocks additional inventory capacity." />
                     <span className="text-xs text-zinc-400 ml-1">·</span>
                     <span className="text-xs text-zinc-400">Partnership Engine</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="border border-zinc-200 rounded-md p-4">
                       <div className="text-xs text-zinc-400 mb-1.5">Working Capital Required</div>
+
                       <div className="text-2xl font-black text-zinc-900">{res.workingCapital.toLocaleString()}</div>
                       <div className="text-xs text-zinc-400 mt-0.5">AZN · safety stock × cost × lead</div>
                     </div>
@@ -1143,10 +1606,15 @@ export default function App() {
                       <div className="mt-2 text-xs font-semibold text-green-600">+{res.upliftPct}% capacity unlocked</div>
                     </div>
                   </div>
+                  <div className="mt-3 pt-3 border-t border-zinc-100 flex items-center gap-2">
+                    <Target className="w-3.5 h-3.5 text-zinc-400" />
+                    <span className="text-xs text-zinc-500">Shelf Placement:</span>
+                    <span className="text-xs font-medium text-zinc-700">{res.shelfPlacement}</span>
+                  </div>
                 </motion.div>
 
                 {/* CTA */}
-                <motion.div className="bg-zinc-900 rounded-md p-5 flex items-center justify-between"
+                <motion.div className="no-print bg-zinc-900 rounded-md p-5 flex items-center justify-between"
                   initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.43 }}>
                   <div>
                     <div className="font-semibold text-white text-sm">Ready to launch with Bravo?</div>

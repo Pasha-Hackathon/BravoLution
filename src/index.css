@@ -19,3 +19,9 @@
     font-family: 'DM Mono', 'Courier New', monospace;
   }
 }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+  .print-break { page-break-before: always; }
+}
