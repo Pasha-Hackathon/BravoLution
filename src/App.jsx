@@ -4,26 +4,49 @@ import {
   Cpu, TrendingUp, Activity, DollarSign, AlertTriangle, ShieldCheck,
   Landmark, Star, CheckCircle, X, ChevronRight, ArrowLeft, Info,
   Package, Globe2, Target, BarChart3, Zap, Building2,
-  Bookmark, Printer, BookOpen,
+  Bookmark, Printer, BookOpen, Pencil, Share2, ClipboardList, Clock, Users,
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, Label, ComposedChart, Bar, Line,
+  ScatterChart, Scatter,
 } from 'recharts';
 
 // ─── Products ──────────────────────────────────────────────────────────────
 
 const PRODUCTS = [
-  { id:1,  name:'RedBull Zero',           category:'Food & Beverage',       format:'Single Serve (<250g/ml)', tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals', basePrice:2.50,  baseSales:12000 },
-  { id:2,  name:'Ariel Color 3Kg',        category:'Home Care & Cleaning',   format:'Bulk/Family (>1kg)',       tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'Families',                 basePrice:12.00, baseSales:5000  },
-  { id:3,  name:'Local Dairy Milk',       category:'Food & Beverage',        format:'Standard (250g-1kg)',      tier:'Economy',     storage:'Chilled (+4°C)', shelfLife:'Short (<7 Days)',  targetDemo:'General/Mass',             basePrice:1.20,  baseSales:25000 },
-  { id:4,  name:"Lay's Max Paprika",      category:'Food & Beverage',        format:'Single Serve (<250g/ml)', tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'General/Mass',             basePrice:1.80,  baseSales:18000 },
-  { id:5,  name:'Pantene Pro-V 400ml',    category:'Personal Care',          format:'Standard (250g-1kg)',      tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals', basePrice:8.50,  baseSales:7500  },
-  { id:6,  name:'Tide Pods 42ct',         category:'Home Care & Cleaning',   format:'Standard (250g-1kg)',      tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'Families',                 basePrice:18.00, baseSales:3200  },
-  { id:7,  name:'Activia Yoghurt 4-Pack', category:'Food & Beverage',        format:'Standard (250g-1kg)',      tier:'Mass Market', storage:'Chilled (+4°C)', shelfLife:'Short (<7 Days)',  targetDemo:'Families',                 basePrice:3.40,  baseSales:9000  },
-  { id:8,  name:'Xiaomi Redmi Buds 4',   category:'Electronics',            format:'Single Serve (<250g/ml)', tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'Students',                 basePrice:35.00, baseSales:1200  },
-  { id:9,  name:'Head & Shoulders 200ml',category:'Personal Care',          format:'Single Serve (<250g/ml)', tier:'Economy',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'General/Mass',             basePrice:4.20,  baseSales:14000 },
-  { id:10, name:'Nesquik 1kg',            category:'Food & Beverage',        format:'Bulk/Family (>1kg)',       tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'Families',                 basePrice:9.90,  baseSales:6500  },
+  // Food & Beverage — Single Serve
+  { id:1,  name:'RedBull Zero 250ml',        category:'Food & Beverage', format:'Single Serve (<250g/ml)', tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals', basePrice:2.50,  baseSales:12000 },
+  { id:2,  name:"Lay's Max Paprika 50g",     category:'Food & Beverage', format:'Single Serve (<250g/ml)', tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'General/Mass',             basePrice:1.80,  baseSales:18000 },
+  { id:3,  name:'Coca-Cola Zero 500ml',      category:'Food & Beverage', format:'Single Serve (<250g/ml)', tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'Students',                 basePrice:1.50,  baseSales:22000 },
+  { id:4,  name:'Evian Still Water 750ml',   category:'Food & Beverage', format:'Single Serve (<250g/ml)', tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals', basePrice:2.90,  baseSales:9500  },
+  { id:5,  name:'Snickers 50g',              category:'Food & Beverage', format:'Single Serve (<250g/ml)', tier:'Economy',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'Students',                 basePrice:0.90,  baseSales:28000 },
+  // Food & Beverage — Standard
+  { id:6,  name:'Activia Yoghurt 4-Pack',    category:'Food & Beverage', format:'Standard (250g-1kg)',     tier:'Mass Market', storage:'Chilled (+4°C)', shelfLife:'Short (<7 Days)',  targetDemo:'Families',                 basePrice:3.40,  baseSales:9000  },
+  { id:7,  name:'Local Dairy Milk 1L',       category:'Food & Beverage', format:'Standard (250g-1kg)',     tier:'Economy',     storage:'Chilled (+4°C)', shelfLife:'Short (<7 Days)',  targetDemo:'General/Mass',             basePrice:1.20,  baseSales:25000 },
+  { id:8,  name:'Chobani Greek Yoghurt 450g',category:'Food & Beverage', format:'Standard (250g-1kg)',     tier:'Premium',     storage:'Chilled (+4°C)', shelfLife:'Short (<7 Days)',  targetDemo:'High-Income/Professionals', basePrice:5.20,  baseSales:4800  },
+  { id:9,  name:'Pringles Original 165g',    category:'Food & Beverage', format:'Standard (250g-1kg)',     tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'General/Mass',             basePrice:3.60,  baseSales:11000 },
+  { id:10, name:"Lay's Family Pack 200g",    category:'Food & Beverage', format:'Standard (250g-1kg)',     tier:'Economy',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'Families',                 basePrice:2.80,  baseSales:14500 },
+  // Food & Beverage — Bulk
+  { id:11, name:'Nesquik 1kg',               category:'Food & Beverage', format:'Bulk/Family (>1kg)',      tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'Families',                 basePrice:9.90,  baseSales:6500  },
+  { id:12, name:'Barilla Pasta 5-Pack',      category:'Food & Beverage', format:'Bulk/Family (>1kg)',      tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals', basePrice:11.50, baseSales:3800  },
+  { id:13, name:'Economy Rice 5kg',          category:'Food & Beverage', format:'Bulk/Family (>1kg)',      tier:'Economy',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'General/Mass',             basePrice:6.40,  baseSales:19000 },
+  // Personal Care
+  { id:14, name:'Pantene Pro-V 400ml',       category:'Personal Care',   format:'Standard (250g-1kg)',     tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals', basePrice:8.50,  baseSales:7500  },
+  { id:15, name:'Head & Shoulders 200ml',    category:'Personal Care',   format:'Single Serve (<250g/ml)', tier:'Economy',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'General/Mass',             basePrice:4.20,  baseSales:14000 },
+  { id:16, name:'Dove Body Wash 250ml',      category:'Personal Care',   format:'Single Serve (<250g/ml)', tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'Families',                 basePrice:5.80,  baseSales:8500  },
+  { id:17, name:'Nivea Moisturiser 150ml',   category:'Personal Care',   format:'Single Serve (<250g/ml)', tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'High-Income/Professionals', basePrice:7.20,  baseSales:5200  },
+  { id:18, name:"Gillette Mach3 4-Pack",     category:'Personal Care',   format:'Standard (250g-1kg)',     tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'General/Mass',             basePrice:9.80,  baseSales:6200  },
+  { id:19, name:'Garnier Micellar Water 400ml',category:'Personal Care', format:'Standard (250g-1kg)',     tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'Students',                 basePrice:6.40,  baseSales:7800  },
+  // Home Care & Cleaning
+  { id:20, name:'Ariel Color 3kg',           category:'Home Care & Cleaning', format:'Bulk/Family (>1kg)', tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'Families',                 basePrice:12.00, baseSales:5000  },
+  { id:21, name:'Tide Pods 42ct',            category:'Home Care & Cleaning', format:'Standard (250g-1kg)',tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'Families',                 basePrice:18.00, baseSales:3200  },
+  { id:22, name:'Fairy Dish Soap 500ml',     category:'Home Care & Cleaning', format:'Single Serve (<250g/ml)',tier:'Economy', storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'General/Mass',             basePrice:3.10,  baseSales:16000 },
+  { id:23, name:'Domestos Bleach 750ml',     category:'Home Care & Cleaning', format:'Single Serve (<250g/ml)',tier:'Economy', storage:'Ambient (Dry)',  shelfLife:'Long (>6 Months)', targetDemo:'General/Mass',             basePrice:2.80,  baseSales:12500 },
+  // Electronics
+  { id:24, name:'Xiaomi Redmi Buds 4',       category:'Electronics',     format:'Single Serve (<250g/ml)', tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'Students',                 basePrice:35.00, baseSales:1200  },
+  { id:25, name:'Anker PowerCore 10000',     category:'Electronics',     format:'Standard (250g-1kg)',     tier:'Mass Market', storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'High-Income/Professionals', basePrice:42.00, baseSales:850   },
+  { id:26, name:'JBL Go 3 Speaker',          category:'Electronics',     format:'Single Serve (<250g/ml)', tier:'Premium',     storage:'Ambient (Dry)',  shelfLife:'Non-Perishable',   targetDemo:'Students',                 basePrice:55.00, baseSales:620   },
 ];
 
 const ALLOCATIONS = {
@@ -78,13 +101,15 @@ function filterAllocation(rows, region) {
   return filtered.map(r => ({ ...r, pct: Math.round(r.pct / total * 100) }));
 }
 
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 function getSeasonalMarkers(category, seasonality) {
   if (seasonality === 'Seasonal Only') return [];
   const m = [];
-  if (category !== 'Electronics') m.push({ x: 'Mar', label: 'Nowruz', color: '#d97706' });
-  if (category === 'Food & Beverage') m.push({ x: 'Jun', label: 'Summer Peak', color: '#0369a1' });
-  if (category === 'Electronics') m.push({ x: 'Jun', label: 'Tech Season', color: '#7c3aed' });
-  if (category === 'Personal Care') m.push({ x: 'Jun', label: 'Summer Demand', color: '#16a34a' });
+  if (category !== 'Electronics') m.push({ x: MONTH_ABBR[2], label: 'Nowruz', color: '#d97706' });
+  if (category === 'Food & Beverage') m.push({ x: MONTH_ABBR[5], label: 'Summer Peak', color: '#0369a1' });
+  if (category === 'Electronics') m.push({ x: MONTH_ABBR[5], label: 'Tech Season', color: '#7c3aed' });
+  if (category === 'Personal Care') m.push({ x: MONTH_ABBR[5], label: 'Summer Demand', color: '#16a34a' });
   return m;
 }
 
@@ -132,7 +157,7 @@ function computeResults(form) {
   const baseline   = scored[0];
   const matchScore = baseline.score;
   const topAnalogs = scored.slice(0, 3).map(p => ({
-    name: p.name, score: p.score, similarity: Math.round(p.score), baseSales: p.baseSales,
+    name: p.name, score: p.score, similarity: Math.round(p.score), baseSales: p.baseSales, basePrice: p.basePrice,
   }));
 
   // Attribute contributions
@@ -162,10 +187,11 @@ function computeResults(form) {
     ? `${form.channel} ${channelMult > 1 ? '+' : ''}${Math.round((channelMult - 1) * 100)}%`
     : form.channel;
 
-  // Forecast
+  // Forecast — log-linear (constant elasticity) model: Q = Q0 × (P/P0)^e
+  // Never goes negative; valid across large price ranges unlike the linear approximation
   const priceGapPercent = ((newPrice - baseline.basePrice) / baseline.basePrice) * 100;
   const predictedTotal  = Math.max(1, Math.round(
-    baseline.baseSales * (1 + (priceGapPercent / 100) * elasticity) * channelMult
+    baseline.baseSales * Math.pow(newPrice / baseline.basePrice, elasticity) * channelMult
   ));
   const errorRate       = parseFloat((Math.abs(priceGapPercent) * 0.08 + 1.9 + (100 - matchScore) * 0.03).toFixed(1));
   const confidence      = parseFloat((100 - errorRate).toFixed(1));
@@ -213,8 +239,9 @@ function computeResults(form) {
     : workingCapital < 100000 ? { name:'Regional Vendor Program',     desc:'All Baku stores · Co-marketing support · 12-month contract'   }
     :                           { name:'Strategic Supply Partner',    desc:'All Bravo locations · Dedicated shelf space · Analytics access' };
 
-  // Chart data — shape varies by seasonality
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+  // Chart data — shape varies by seasonality, starts from current calendar month
+  const startMonth = new Date().getMonth();
+  const months     = Array.from({ length: 8 }, (_, i) => MONTH_ABBR[(startMonth + i) % 12]);
   const errF = errorRate / 100;
   const seasonShape =
     form.seasonality === 'Peak Season Product' ? [0.40, 0.55, 0.75, 0.92, 1.00, 0.95, 0.82, 0.68]
@@ -242,11 +269,10 @@ function computeResults(form) {
   });
   const breakevenMonth = cashFlowData.findIndex(d => d.net >= 0) + 1;
 
-  // Price sensitivity — uses category-specific elasticity and channel multiplier
+  // Price sensitivity — same log-linear model
   const sensitivityScenarios = [-0.10, 0, 0.10].map(delta => {
     const p   = newPrice * (1 + delta);
-    const gap = ((p - baseline.basePrice) / baseline.basePrice) * 100;
-    const vol = Math.max(1, Math.round(baseline.baseSales * (1 + (gap / 100) * elasticity) * channelMult));
+    const vol = Math.max(1, Math.round(baseline.baseSales * Math.pow(p / baseline.basePrice, elasticity) * channelMult));
     return { delta, price: parseFloat(p.toFixed(2)), volume: vol, diff: vol - predictedTotal };
   });
 
@@ -257,17 +283,35 @@ function computeResults(form) {
   const compPrice = form.competitorPrice ? parseFloat(form.competitorPrice) : null;
   const compGap   = compPrice ? ((newPrice - compPrice) / compPrice * 100).toFixed(1) : null;
 
+  // Optimal launch window — month where cumulative 3-month demand is highest
+  let bestLaunchIdx = 0, bestCum = 0;
+  chartData.forEach((_, i) => {
+    if (i > chartData.length - 3) return;
+    const cum = chartData.slice(i, i + 3).reduce((s, d) => s + d.Predicted, 0);
+    if (cum > bestCum) { bestCum = cum; bestLaunchIdx = i; }
+  });
+  const optimalLaunchMonth = months[bestLaunchIdx];
+
+  // Forecast attribution — decompose how the final number was built
+  const afterPrice          = Math.round(baseline.baseSales * Math.pow(newPrice / baseline.basePrice, elasticity));
+  const forecastAttribution = {
+    baseline:      baseline.baseSales,
+    priceEffect:   afterPrice - baseline.baseSales,
+    channelEffect: predictedTotal - afterPrice,
+    total:         predictedTotal,
+  };
+
   return {
     baseline, matchScore, topAnalogs, contributions,
     newPrice, priceGapPercent, predictedTotal, errorRate, confidence, projectedRevenue,
-    channelLabel,
+    channelLabel, elasticity, channelMult,
     riskLevel, eoq, safetyStock, rop, firstOrderQty,
     launchScore, allocRows,
     storeCount: REGION_STORES[form.region] || 67,
     shelfPlacement: getShelfPlacement(form.category, form.tier, form.storage),
     workingCapital, financingProduct, financedUnits, upliftPct,
     chartData, cashFlowData, breakevenMonth, sensitivityScenarios, seasonalMarkers,
-    compGap,
+    compGap, forecastAttribution, optimalLaunchMonth,
   };
 }
 
@@ -482,6 +526,41 @@ function DispatchMatrix({ rows }) {
   );
 }
 
+// ─── Azerbaijan Map ─────────────────────────────────────────────────────────
+
+function AzMapViz({ allocRows }) {
+  const CITY_COORDS = {
+    'Baku':     { x: 218, y: 82 },
+    'Sumgayit': { x: 212, y: 57 },
+    'Ganja':    { x: 76,  y: 78 },
+  };
+  const cityTotals = {};
+  allocRows.forEach(r => { cityTotals[r.city] = (cityTotals[r.city] || 0) + r.pct; });
+  const maxPct = Math.max(...Object.values(cityTotals), 1);
+  return (
+    <svg viewBox="0 0 260 140" className="w-full" style={{ height: 96 }}>
+      <polygon
+        points="20,60 38,30 72,20 112,24 145,20 178,30 205,22 232,42 250,68 244,92 226,108 200,118 168,132 130,137 90,132 60,122 32,110 18,90"
+        fill="#f8fafc" stroke="#e2e8f0" strokeWidth="1.5"
+      />
+      <path d="M250,68 C258,76 260,88 253,98 L244,92 Z" fill="#dbeafe" fillOpacity="0.65" />
+      {Object.entries(CITY_COORDS).map(([city, pos]) => {
+        const pct = cityTotals[city] || 0;
+        if (pct === 0) return null;
+        const r = 5 + (pct / maxPct) * 11;
+        return (
+          <g key={city}>
+            <circle cx={pos.x} cy={pos.y} r={r} fill="#1d4ed8" fillOpacity="0.14" stroke="#1d4ed8" strokeWidth="1.5" />
+            <circle cx={pos.x} cy={pos.y} r={3} fill="#1d4ed8" />
+            <text x={pos.x} y={pos.y - r - 3} textAnchor="middle" fontSize="8" fill="#64748b" fontFamily="DM Sans,system-ui,sans-serif">{city}</text>
+            <text x={pos.x} y={pos.y + r + 9} textAnchor="middle" fontSize="8" fill="#1d4ed8" fontFamily="DM Sans,system-ui,sans-serif" fontWeight="700">{pct}%</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 // ─── Animated Score Bars ───────────────────────────────────────────────────
 
 function ScoreBars({ bars, color }) {
@@ -561,13 +640,129 @@ function CashTooltip({ active, payload, label }) {
   );
 }
 
+// ─── Competitor Chart ──────────────────────────────────────────────────────
+
+function CompetitorChart({ topAnalogs, newPrice, predictedTotal, compPrice, elasticity, channelMult, baseline, productName }) {
+  const analogDots = topAnalogs.map(a => ({ x: a.basePrice, y: a.baseSales, label: a.name }));
+  const yourDot    = [{ x: newPrice, y: predictedTotal, label: productName }];
+  let   compDot    = [];
+  if (compPrice) {
+    const vol = Math.max(1, Math.round(baseline.baseSales * Math.pow(compPrice / baseline.basePrice, elasticity) * channelMult));
+    compDot   = [{ x: compPrice, y: vol, label: 'Competitor' }];
+  }
+  const CustomDot = ({ cx, cy, payload, fill }) => {
+    if (!cx || !cy) return null;
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={7} fill={fill} fillOpacity={0.85} stroke="white" strokeWidth={1.5} />
+        <text x={cx} y={cy - 12} textAnchor="middle" fontSize={9} fill="#64748b" fontFamily="DM Sans,system-ui">{payload?.label}</text>
+      </g>
+    );
+  };
+  return (
+    <ResponsiveContainer width="100%" height={180}>
+      <ScatterChart margin={{ top:20, right:20, bottom:8, left:0 }}>
+        <CartesianGrid stroke="#f4f4f5" strokeDasharray="3 3" />
+        <XAxis dataKey="x" type="number" domain={['auto','auto']}
+          tick={{ fill:'#a1a1aa', fontSize:11 }} axisLine={false} tickLine={false}
+          tickFormatter={v => `${v.toFixed(2)} ₼`} />
+        <YAxis dataKey="y" type="number" domain={['auto','auto']}
+          tick={{ fill:'#a1a1aa', fontSize:11 }} axisLine={false} tickLine={false}
+          tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+        <Tooltip cursor={{ strokeDasharray:'3 3' }}
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null;
+            const d = payload[0]?.payload;
+            return (
+              <div className="bg-white border border-zinc-200 rounded-md px-3 py-2 shadow text-xs">
+                <p className="font-medium text-zinc-800 mb-0.5">{d?.label}</p>
+                <p className="text-zinc-500">{d?.x?.toFixed(2)} AZN · {d?.y?.toLocaleString()} units/mo</p>
+              </div>
+            );
+          }}
+        />
+        <Scatter name="Analogs"      data={analogDots} fill="#94a3b8" shape={<CustomDot fill="#94a3b8" />} />
+        <Scatter name="Your Product" data={yourDot}    fill="#1d4ed8" shape={<CustomDot fill="#1d4ed8" />} />
+        {compDot.length > 0 && <Scatter name="Competitor" data={compDot} fill="#dc2626" shape={<CustomDot fill="#dc2626" />} />}
+      </ScatterChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─── Launch Timeline ────────────────────────────────────────────────────────
+
+const TIMELINE_STEPS = [
+  { label:'Application', sub:'Analysis submitted',    done:true  },
+  { label:'Review',      sub:'Category team scoring', active:true },
+  { label:'Negotiate',   sub:'Pricing & margins',     done:false  },
+  { label:'Planogram',   sub:'Shelf slot assigned',   done:false  },
+  { label:'First Order', sub:'PO issued & delivered', done:false  },
+  { label:'Go Live',     sub:'In-store setup',        done:false  },
+  { label:'Monitor',     sub:'Sales tracking begins', done:false  },
+];
+
+function LaunchTimeline() {
+  return (
+    <div className="relative pt-1">
+      <div className="absolute top-4 left-[3.5%] right-[3.5%] h-px bg-zinc-200" />
+      <div className="relative flex justify-between">
+        {TIMELINE_STEPS.map((step, i) => (
+          <div key={step.label} className="flex flex-col items-center" style={{ width:`${100/TIMELINE_STEPS.length}%` }}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 z-10 transition-colors ${
+              step.done   ? 'bg-blue-700 border-blue-700 text-white'
+              : step.active ? 'bg-white border-blue-700 text-blue-700'
+              : 'bg-white border-zinc-200 text-zinc-400'
+            }`}>
+              {step.done ? '✓' : i + 1}
+            </div>
+            <div className={`text-xs font-medium mt-2 text-center leading-tight ${!step.done && !step.active ? 'text-zinc-400' : 'text-zinc-800'}`}>{step.label}</div>
+            <div className="text-xs text-zinc-400 text-center leading-tight mt-0.5 hidden sm:block">{step.sub}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Readiness Checklist ───────────────────────────────────────────────────
+
+const READINESS_ITEMS = [
+  { id:'barcode',   label:'EAN/barcode registered'    },
+  { id:'images',    label:'Product images (hi-res)'   },
+  { id:'halal',     label:'Halal / food safety cert'  },
+  { id:'label',     label:'Azerbaijani ingredient label' },
+  { id:'packaging', label:'Shelf-ready packaging'     },
+  { id:'moq',       label:'Min. order qty confirmed'  },
+  { id:'insurance', label:'Product liability insurance' },
+  { id:'docs',      label:'Company registration docs' },
+];
+
 // ─── Financing Modal ───────────────────────────────────────────────────────
 
-function FinancingModal({ product, workingCapital, onClose }) {
+function FinancingModal({ product, workingCapital, onClose, onSubmit, vendorForm, results }) {
   const [done, setDone] = useState(false);
   const [ref] = useState(() => `BF-${Math.floor(100000 + Math.random() * 900000)}`);
   const [f, setF] = useState({ name:'', company:'', phone:'' });
-  const submit = e => { e.preventDefault(); setDone(true); };
+  const submit = e => {
+    e.preventDefault();
+    setDone(true);
+    if (onSubmit) onSubmit({
+      id: ref, timestamp: Date.now(),
+      vendor: f.name, company: f.company, phone: f.phone,
+      form: vendorForm,
+      metrics: {
+        score:     results?.launchScore?.total,
+        verdict:   results?.launchScore?.verdict,
+        level:     results?.launchScore?.level,
+        volume:    results?.predictedTotal,
+        revenue:   results?.projectedRevenue,
+        risk:      results?.riskLevel?.label,
+        riskLevel: results?.riskLevel?.level,
+        confidence:results?.confidence,
+      },
+      status: 'pending',
+    });
+  };
   return (
     <motion.div
       className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4"
@@ -626,7 +821,7 @@ function FinancingModal({ product, workingCapital, onClose }) {
 
 // ─── App State ─────────────────────────────────────────────────────────────
 
-const SCREENS = { S1:'s1', S2:'s2', S3:'s3', S4:'s4', PULSE:'pulse', DASH:'dash' };
+const SCREENS = { S1:'s1', S2:'s2', S3:'s3', S4:'s4', PULSE:'pulse', DASH:'dash', MANAGER:'manager', COMPARE:'compare' };
 
 const STEP_CONTEXT = [
   {
@@ -672,83 +867,135 @@ const STEP_CONTEXT = [
   },
 ];
 
-function PreviewPanel() {
-  const bars = [
-    { label:'Product Fit',        pts:'22/30', pct:73 },
-    { label:'Market Timing',      pts:'15/25', pct:60 },
-    { label:'Financial Viability',pts:'14/25', pct:56 },
-    { label:'Supply Chain',       pts:'15/20', pct:75 },
-  ];
-  return (
-    <div className="flex-1 border-l border-zinc-100 p-7 flex flex-col bg-zinc-50 rounded-r-md min-w-0">
-      <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Sample output</div>
+// ─── Live Preview (replaces static PreviewPanel) ──────────────────────────
 
-      {/* Mini launch score */}
-      <div className="bg-white border border-amber-200 rounded-md p-4 mb-3">
-        <div className="flex items-end justify-between mb-2">
-          <div className="flex items-end gap-1.5">
-            <span className="text-4xl font-black text-amber-600 leading-none">74</span>
-            <span className="text-sm text-zinc-400 mb-0.5">/100</span>
+const PANEL_CLS = 'flex-1 border-t sm:border-t-0 sm:border-l border-zinc-100 p-7 flex flex-col bg-zinc-50 rounded-b-md sm:rounded-b-none sm:rounded-r-md min-w-0';
+
+function LivePreview({ form }) {
+  const valid = form?.name?.trim() && form?.price && parseFloat(form?.price) > 0;
+  if (!valid) {
+    return (
+      <div className={PANEL_CLS}>
+        <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Live Preview</div>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <BarChart3 className="w-7 h-7 text-zinc-200 mb-3" />
+          <p className="text-xs text-zinc-400 text-center leading-relaxed">
+            Enter a product name and price<br />to see a live forecast estimate
+          </p>
+        </div>
+        <div className="mt-auto pt-5 border-t border-zinc-100">
+          <div className="space-y-1.5">
+            {['67 stores · 5 locations', 'KNN across 10 analog SKUs', 'Gemini AI market report'].map((s,i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
+                <span className="text-xs text-zinc-400">{s}</span>
+              </div>
+            ))}
           </div>
-          <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
-            Viable with Mitigation
-          </span>
         </div>
-        <div className="space-y-1.5">
-          {bars.map(b => (
-            <div key={b.label}>
-              <div className="flex justify-between text-xs text-zinc-400 mb-0.5">
-                <span>{b.label}</span><span className="font-mono">{b.pts}</span>
-              </div>
-              <div className="h-1 bg-zinc-100 rounded-sm">
-                <div className="h-full bg-amber-400 rounded-sm" style={{ width:`${b.pct}%` }} />
-              </div>
+      </div>
+    );
+  }
+  try {
+    const p = computeResults(form);
+    const s = p.launchScore.total >= 75 ? { cls:'text-green-700', bg:'bg-green-50 border-green-200', bar:'bg-green-500' }
+            : p.launchScore.total >= 50 ? { cls:'text-amber-700',  bg:'bg-amber-50 border-amber-200',  bar:'bg-amber-400'  }
+            :                             { cls:'text-red-700',    bg:'bg-red-50 border-red-200',      bar:'bg-red-400'    };
+    return (
+      <div className={PANEL_CLS}>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Live Preview</div>
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+        </div>
+
+        {/* Score + volume */}
+        <div className={`border rounded-md p-3 mb-3 ${s.bg}`}>
+          <div className="flex items-end justify-between mb-2">
+            <div>
+              <div className="text-xs opacity-50 mb-0.5">Viability Score</div>
+              <div className={`text-4xl font-black leading-none ${s.cls}`}>{p.launchScore.total}</div>
+              <div className="text-xs opacity-50 mt-0.5">/100</div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Mini KPI row */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-white border border-zinc-200 rounded-md p-3">
-          <div className="text-xs text-zinc-400 mb-1">Volume forecast</div>
-          <div className="text-lg font-black text-zinc-900 leading-none">14,200</div>
-          <div className="text-xs text-zinc-400 mt-0.5">units / month</div>
-        </div>
-        <div className="bg-white border border-zinc-200 rounded-md p-3">
-          <div className="text-xs text-zinc-400 mb-1">Model confidence</div>
-          <div className="text-lg font-black text-zinc-900 leading-none">94.1%</div>
-          <div className="text-xs text-zinc-400 mt-0.5">MAPE ±5.9%</div>
-        </div>
-      </div>
-
-      {/* Gemini pill */}
-      <div className="flex items-center gap-2 bg-white border border-zinc-200 rounded-md px-3 py-2">
-        <Cpu className="w-3 h-3 text-blue-700 shrink-0" />
-        <span className="text-xs text-zinc-500">Gemini AI market intelligence included</span>
-      </div>
-
-      <div className="mt-auto pt-5 border-t border-zinc-200 mt-5">
-        <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2.5">Bravo Network</div>
-        <div className="space-y-1.5">
-          {['67 stores nationwide', 'Baku · Sumgayit · Ganja', '2.4M+ monthly shoppers'].map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-1 h-1 rounded-full bg-blue-700 shrink-0" />
-              <span className="text-xs text-zinc-500">{s}</span>
+            <div className="text-right">
+              <div className="text-xs text-zinc-400 mb-0.5">Volume</div>
+              <div className="text-2xl font-black text-zinc-900 leading-none">{p.predictedTotal.toLocaleString()}</div>
+              <div className="text-xs text-zinc-400 mt-0.5">units/mo</div>
             </div>
-          ))}
+          </div>
+          <div className={`text-xs font-medium px-2 py-0.5 rounded border inline-block ${s.bg} ${s.cls}`}>{p.launchScore.verdict}</div>
+        </div>
+
+        {/* KNN match */}
+        <div className="bg-white border border-zinc-200 rounded-md p-3 mb-2.5">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-zinc-400">KNN Analog</span>
+            <span className="text-xs font-mono text-blue-700">{p.matchScore}pt match</span>
+          </div>
+          <div className="text-sm font-semibold text-zinc-800 leading-tight truncate">{p.baseline.name}</div>
+          <div className="text-xs text-zinc-400 mt-0.5">{p.baseline.baseSales.toLocaleString()} units/mo baseline</div>
+          <div className="h-1 bg-zinc-100 rounded-sm mt-1.5">
+            <div className="h-full bg-blue-700 rounded-sm transition-all duration-300" style={{ width:`${p.matchScore}%` }} />
+          </div>
+        </div>
+
+        {/* Price position */}
+        <div className="bg-white border border-zinc-200 rounded-md p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-zinc-400">Price vs. analog</span>
+            <span className={`text-xs font-semibold ${p.priceGapPercent > 10 ? 'text-red-600' : p.priceGapPercent < -5 ? 'text-green-600' : 'text-zinc-500'}`}>
+              {p.priceGapPercent > 0 ? '+' : ''}{p.priceGapPercent.toFixed(1)}%
+            </span>
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-sm font-semibold text-zinc-800">{parseFloat(form.price).toFixed(2)} AZN</span>
+            <span className="text-xs text-zinc-400">analog: {p.baseline.basePrice.toFixed(2)} AZN</span>
+          </div>
+        </div>
+
+        <div className="mt-auto pt-4 text-center">
+          <span className="text-xs text-zinc-300">Updates live with each field</span>
         </div>
       </div>
-    </div>
-  );
+    );
+  } catch { return null; }
 }
 
-function RightPanel({ step }) {
-  if (step === 0) return <PreviewPanel />;
+// ─── Live Estimate Strip (steps 1-3 top bar) ───────────────────────────────
+
+function LiveEstimateStrip({ form }) {
+  if (!form?.name?.trim() || !form?.price || parseFloat(form?.price) <= 0) return null;
+  try {
+    const p = computeResults(form);
+    return (
+      <div className="bg-white border border-zinc-200 rounded-md p-3 mb-4">
+        <div className="flex items-center gap-1.5 mb-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Live Estimate</span>
+        </div>
+        <div className="grid grid-cols-3 gap-1 text-center divide-x divide-zinc-100">
+          {[
+            { val: p.launchScore.total,    sub: 'Score /100' },
+            { val: p.predictedTotal >= 1000 ? `${(p.predictedTotal/1000).toFixed(0)}k` : p.predictedTotal, sub: 'Units/mo' },
+            { val: p.projectedRevenue >= 1000 ? `${(p.projectedRevenue/1000).toFixed(0)}k` : p.projectedRevenue, sub: 'AZN/mo' },
+          ].map(({ val, sub }) => (
+            <div key={sub}>
+              <div className="text-base font-black text-zinc-900 leading-none">{val}</div>
+              <div className="text-xs text-zinc-400 mt-0.5">{sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  } catch { return null; }
+}
+
+function RightPanel({ step, liveData }) {
+  if (step === 0) return <LivePreview form={liveData} />;
   const ctx = STEP_CONTEXT[step];
   if (!ctx) return null;
   return (
-    <div className="flex-1 border-l border-zinc-100 p-7 flex flex-col bg-zinc-50 rounded-r-md min-w-0">
+    <div className={PANEL_CLS}>
+      <LiveEstimateStrip form={liveData} />
       <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">{ctx.heading}</div>
       <div className="space-y-3.5 flex-1">
         {ctx.items.map(({ Icon, text }, i) => (
@@ -814,15 +1061,15 @@ function HexBg() {
   );
 }
 
-function WizardCard({ children, step = null }) {
+function WizardCard({ children, step = null, liveData = null }) {
   return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4 relative overflow-hidden">
       <HexBg />
-      <div className={`relative z-10 bg-white border border-zinc-200 rounded-md shadow-sm w-full flex overflow-hidden ${step !== null ? 'max-w-3xl' : 'max-w-md'}`}>
-        <div className={`${step !== null ? 'w-[420px] shrink-0' : 'w-full'} p-7`}>
+      <div className={`relative z-10 bg-white border border-zinc-200 rounded-md shadow-sm w-full flex flex-col sm:flex-row overflow-hidden ${step !== null ? 'max-w-3xl' : 'max-w-md'}`}>
+        <div className={`${step !== null ? 'sm:w-[420px] sm:shrink-0' : ''} w-full p-7`}>
           {children}
         </div>
-        {step !== null && <RightPanel step={step} />}
+        {step !== null && <RightPanel step={step} liveData={liveData} />}
       </div>
     </div>
   );
@@ -891,15 +1138,52 @@ const FADE = { initial:{opacity:0}, animate:{opacity:1}, exit:{opacity:0}, trans
 export default function App() {
   const [screen,         setScreen]         = useState(SCREENS.S1);
   const [modal,          setModal]          = useState(false);
-  const [form,           setForm]           = useState(BLANK);
+  const [form,           setForm]           = useState(() => {
+    try {
+      const s = new URLSearchParams(window.location.search).get('s');
+      if (s) return JSON.parse(decodeURIComponent(atob(s)));
+    } catch {}
+    return BLANK;
+  });
   const [res,            setRes]            = useState(null);
   const [savedScenarios, setSavedScenarios] = useState(() => {
     try { return JSON.parse(localStorage.getItem('bfScenarios') || '[]'); } catch { return []; }
   });
   const [scenariosOpen,  setScenariosOpen]  = useState(false);
+  const [livePrice,      setLivePrice]      = useState(0);
+  const [checklist,      setChecklist]      = useState({});
+  const [shareCopied,    setShareCopied]    = useState(false);
+  const [submissions,    setSubmissions]    = useState(() => {
+    try { return JSON.parse(localStorage.getItem('bfSubmissions') || '[]'); } catch { return []; }
+  });
+  const [managerFilter,  setManagerFilter]  = useState('all');
+  const [replyModal,     setReplyModal]     = useState(null);
+  const [shockEnabled,   setShockEnabled]   = useState(false);
+  const [shockPct,       setShockPct]       = useState(-15);
+
+  useEffect(() => { if (res?.newPrice) setLivePrice(res.newPrice); }, [res?.newPrice]);
+
+  // Auto-run analysis when page is opened via share link
+  useEffect(() => {
+    try {
+      const s = new URLSearchParams(window.location.search).get('s');
+      if (s) {
+        const f = JSON.parse(decodeURIComponent(atob(s)));
+        const computed = computeResults(f);
+        setRes({ ...computed, aiInsights: null, aiLoading: true });
+        setScreen(SCREENS.PULSE);
+        setTimeout(() => setScreen(SCREENS.DASH), 2750);
+        fetchAIInsights(f, computed).then(insights =>
+          setRes(prev => ({ ...prev, aiInsights: insights, aiLoading: false }))
+        );
+      }
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const step1OK = form.name.trim() && form.price && parseFloat(form.price) > 0;
+
+  const toggleCheck = id => setChecklist(prev => ({ ...prev, [id]: !prev[id] }));
 
   const submit = (overrideForm) => {
     const f = overrideForm || form;
@@ -912,7 +1196,18 @@ export default function App() {
     );
   };
 
-  const reset = () => { setScreen(SCREENS.S1); setRes(null); setForm(BLANK); };
+  const reset = () => { setScreen(SCREENS.S1); setRes(null); setForm(BLANK); window.history.replaceState(null, '', window.location.pathname); };
+
+  const shareAnalysis = () => {
+    try {
+      const encoded = btoa(encodeURIComponent(JSON.stringify(form)));
+      const url = `${window.location.origin}${window.location.pathname}?s=${encoded}`;
+      window.history.replaceState(null, '', `?s=${encoded}`);
+      navigator.clipboard.writeText(url).catch(() => {});
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2200);
+    } catch {}
+  };
 
   const saveScenario = () => {
     if (!res) return;
@@ -923,6 +1218,31 @@ export default function App() {
   };
 
   const loadScenario = (s) => { setScenariosOpen(false); submit(s.form); };
+
+  const addSubmission = (sub) => {
+    const updated = [sub, ...submissions];
+    setSubmissions(updated);
+    try { localStorage.setItem('bfSubmissions', JSON.stringify(updated)); } catch {}
+  };
+
+  const updateSubmissionStatus = (id, status) => {
+    const target = submissions.find(s => s.id === id);
+    const updated = submissions.map(s => s.id === id ? { ...s, status } : s);
+    setSubmissions(updated);
+    try { localStorage.setItem('bfSubmissions', JSON.stringify(updated)); } catch {}
+    if ((status === 'approved' || status === 'needs_info') && target) {
+      setReplyModal({ sub: { ...target, status }, status });
+    }
+  };
+
+  const reviewSubmission = (sub) => {
+    if (!sub.form) return;
+    const f = sub.form;
+    setForm(f);
+    const computed = computeResults(f);
+    setRes({ ...computed, aiInsights: null, aiLoading: false });
+    setScreen(SCREENS.DASH);
+  };
 
   const riskCfg = {
     high:   { bg:'bg-red-50   border-red-200',   text:'text-red-700',   Icon: AlertTriangle },
@@ -943,7 +1263,7 @@ export default function App() {
         {/* ── Step 1 ── */}
         {screen === SCREENS.S1 && (
           <motion.div key="s1" {...FADE}>
-            <WizardCard step={0}>
+            <WizardCard step={0} liveData={form}>
               <WizardHeader />
               <StepDots current={0} />
               <div className="mb-5">
@@ -993,7 +1313,7 @@ export default function App() {
         {/* ── Step 2 ── */}
         {screen === SCREENS.S2 && (
           <motion.div key="s2" {...FADE}>
-            <WizardCard step={1}>
+            <WizardCard step={1} liveData={form}>
               <WizardHeader />
               <StepDots current={1} />
               <div className="mb-5">
@@ -1020,7 +1340,7 @@ export default function App() {
         {/* ── Step 3 ── */}
         {screen === SCREENS.S3 && (
           <motion.div key="s3" {...FADE}>
-            <WizardCard step={2}>
+            <WizardCard step={2} liveData={form}>
               <WizardHeader />
               <StepDots current={2} />
               <div className="mb-5">
@@ -1055,7 +1375,7 @@ export default function App() {
         {/* ── Step 4 ── */}
         {screen === SCREENS.S4 && (
           <motion.div key="s4" {...FADE}>
-            <WizardCard step={3}>
+            <WizardCard step={3} liveData={form}>
               <WizardHeader />
               <StepDots current={3} />
               <div className="mb-5">
@@ -1086,6 +1406,9 @@ export default function App() {
         {screen === SCREENS.DASH && res && (() => {
           const sc  = scoreCfg[res.launchScore.level];
           const risk = riskCfg[res.riskLevel.level];
+          const liveVolume   = Math.max(1, Math.round(res.baseline.baseSales * Math.pow(livePrice / res.baseline.basePrice, res.elasticity) * res.channelMult));
+          const liveRevenue  = Math.round(liveVolume * livePrice);
+          const liveDiff     = liveVolume - res.predictedTotal;
           const scoreBars = [
             { label:'Product Fit',        pts: res.launchScore.productFit,        max:30, pct: Math.round(res.launchScore.productFit / 30 * 100) },
             { label:'Market Timing',      pts: res.launchScore.marketTiming,      max:25, pct: Math.round(res.launchScore.marketTiming / 25 * 100) },
@@ -1124,16 +1447,33 @@ export default function App() {
                         {savedScenarios.length === 0 ? (
                           <div className="px-3 py-3 text-xs text-zinc-400">No saved scenarios yet.</div>
                         ) : (
-                          savedScenarios.map(s => (
-                            <button key={s.id} onClick={() => loadScenario(s)}
-                              className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-b-0">
-                              <div className="text-xs font-medium text-zinc-800 truncate">{s.label}</div>
-                            </button>
-                          ))
+                          <>
+                            {savedScenarios.map(s => (
+                              <button key={s.id} onClick={() => loadScenario(s)}
+                                className="w-full text-left px-3 py-2.5 hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-b-0">
+                                <div className="text-xs font-medium text-zinc-800 truncate">{s.label}</div>
+                              </button>
+                            ))}
+                            {savedScenarios.length >= 2 && (
+                              <button onClick={() => { setScenariosOpen(false); setScreen(SCREENS.COMPARE); }}
+                                className="w-full text-left px-3 py-2.5 border-t border-zinc-200 hover:bg-blue-50 transition-colors flex items-center gap-2 text-blue-700">
+                                <BarChart3 className="w-3 h-3" />
+                                <span className="text-xs font-semibold">Compare scenarios →</span>
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
                   </div>
+                  <button onClick={() => setScreen(SCREENS.S4)}
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1.5 transition-colors">
+                    <Pencil className="w-3 h-3" /> Edit
+                  </button>
+                  <button onClick={shareAnalysis}
+                    className={`flex items-center gap-1.5 text-xs border rounded-md px-2.5 py-1.5 transition-colors ${shareCopied ? 'text-green-700 border-green-300 bg-green-50' : 'text-zinc-500 hover:text-zinc-800 border-zinc-200'}`}>
+                    <Share2 className="w-3 h-3" /> {shareCopied ? 'Copied!' : 'Share'}
+                  </button>
                   <button onClick={saveScenario}
                     className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1.5 transition-colors">
                     <Bookmark className="w-3 h-3" /> Save
@@ -1141,6 +1481,10 @@ export default function App() {
                   <button onClick={() => window.print()}
                     className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1.5 transition-colors">
                     <Printer className="w-3 h-3" /> Print
+                  </button>
+                  <button onClick={() => setScreen(SCREENS.MANAGER)}
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1.5 transition-colors">
+                    <Users className="w-3 h-3" /> Manager {submissions.length > 0 && <span className="bg-blue-700 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[9px] font-bold">{submissions.length}</span>}
                   </button>
                   <button onClick={() => setModal(true)} className="bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-800 transition-colors">
                     Request Vendor Listing
@@ -1318,6 +1662,12 @@ export default function App() {
                         <SectionInfo text="Blue line = your product's predicted monthly units. Grey dashed = the closest analog's historical baseline. The shaded band is a 95% confidence interval based on model error rate. Vertical markers show seasonal demand spikes for this category." />
                       </div>
                       <div className="text-xs text-zinc-400 mt-0.5">Monthly unit volume · confidence band · seasonal markers</div>
+                      {res.optimalLaunchMonth !== res.chartData[0]?.month && (
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <span className="text-xs text-green-700 font-medium">Best window: {res.optimalLaunchMonth}</span>
+                          <span className="text-xs text-zinc-400">— highest 3-month cumulative demand</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-4">
                       {[{c:'#94a3b8',dash:true,l:`${res.baseline.name}`},{c:'#1d4ed8',l:`${form.name}`}].map(({c,dash,l})=>(
@@ -1352,37 +1702,190 @@ export default function App() {
                       <Area type="monotone" dataKey="Predicted" stroke="#1d4ed8" strokeWidth={2} fill="url(#gradPred)" dot={false} />
                     </AreaChart>
                   </ResponsiveContainer>
-                </motion.div>
 
-                {/* Price Sensitivity */}
-                <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.27 }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="text-xs text-zinc-400 font-medium">Price Sensitivity Analysis</div>
-                    <SectionInfo text="Shows how a ±10% price change affects predicted monthly volume, using category-specific price elasticity. A more negative elasticity (e.g. F&B −0.65) means volume changes more sharply with price than Electronics (−0.22)." />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {res.sensitivityScenarios.map((s, i) => {
-                      const isCurrent = i === 1;
-                      const maxVol = Math.max(...res.sensitivityScenarios.map(x => x.volume));
+                  {/* Demand Shock Simulator */}
+                  <div className="mt-4 pt-4 border-t border-zinc-100">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShockEnabled(e => !e)}
+                        className={`text-xs font-medium px-2.5 py-1 rounded border transition-colors ${shockEnabled ? 'bg-red-50 border-red-200 text-red-700' : 'border-zinc-200 text-zinc-400 hover:border-zinc-300 hover:text-zinc-600'}`}
+                      >
+                        {shockEnabled ? 'Hide shock scenario' : 'Simulate market shock'}
+                      </button>
+                      {!shockEnabled && <span className="text-xs text-zinc-300">What if a competitor undercuts your price?</span>}
+                    </div>
+                    {shockEnabled && (() => {
+                      const crossE     = Math.abs(res.elasticity) * 0.6;
+                      const shockVol   = Math.max(1, Math.round(res.predictedTotal * (1 - crossE * Math.abs(shockPct / 100))));
+                      const shockDrop  = res.predictedTotal - shockVol;
+                      const shockRevDrop = Math.round(shockDrop * res.newPrice);
+                      const compPrice  = parseFloat((res.newPrice * (1 + shockPct / 100)).toFixed(2));
+                      const dropPct    = Math.round(crossE * Math.abs(shockPct / 100) * 100);
                       return (
-                        <div key={i} className={`bg-white rounded-md p-4 border ${isCurrent ? 'border-blue-700' : 'border-zinc-200'}`}>
-                          <div className={`text-xs font-medium mb-2 ${isCurrent ? 'text-blue-700' : 'text-zinc-400'}`}>
-                            {i === 0 ? '−10% price' : i === 2 ? '+10% price' : 'Current price'}
+                        <div className="mt-3">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-xs text-zinc-500 whitespace-nowrap shrink-0">Competitor enters at</span>
+                            <input type="range" min={-40} max={-5} step={1} value={shockPct}
+                              onChange={e => setShockPct(parseInt(e.target.value))}
+                              className="flex-1 accent-red-600 cursor-pointer" />
+                            <span className="text-xs font-bold text-red-700 w-8 text-right shrink-0">{shockPct}%</span>
+                            <span className="text-xs text-zinc-400 shrink-0">({compPrice.toFixed(2)} AZN)</span>
                           </div>
-                          <div className="text-sm text-zinc-500 mb-1">{s.price.toFixed(2)} AZN</div>
-                          <div className="text-xl font-black text-zinc-900 mb-1">{s.volume.toLocaleString()}</div>
-                          {!isCurrent && (
-                            <div className={`text-xs font-semibold ${s.diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {s.diff > 0 ? '+' : ''}{s.diff.toLocaleString()} units
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-red-50 border border-red-100 rounded-md p-3">
+                              <div className="text-xs text-red-600 mb-1">Volume Impact</div>
+                              <div className="text-xl font-black text-red-700">−{shockDrop.toLocaleString()}</div>
+                              <div className="text-xs text-zinc-400 mt-0.5">units / month</div>
                             </div>
-                          )}
-                          <div className="h-1 bg-zinc-100 rounded-sm mt-2">
-                            <div className={`h-full rounded-sm ${isCurrent ? 'bg-blue-700' : 'bg-zinc-300'}`}
-                              style={{ width:`${Math.round(s.volume / maxVol * 100)}%` }} />
+                            <div className="bg-red-50 border border-red-100 rounded-md p-3">
+                              <div className="text-xs text-red-600 mb-1">Revenue Impact</div>
+                              <div className="text-xl font-black text-red-700">−{shockRevDrop.toLocaleString()}</div>
+                              <div className="text-xs text-zinc-400 mt-0.5">AZN / month</div>
+                            </div>
+                            <div className="bg-zinc-50 border border-zinc-200 rounded-md p-3">
+                              <div className="text-xs text-zinc-500 mb-1">Remaining Volume</div>
+                              <div className="text-xl font-black text-zinc-900">{shockVol.toLocaleString()}</div>
+                              <div className="text-xs text-zinc-400 mt-0.5">units / month</div>
+                            </div>
                           </div>
+                          <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+                            Cross-price elasticity model: a competitor {Math.abs(shockPct)}% cheaper captures ~{dropPct}% of your volume. Counter with loyalty promotions, shelf visibility, or a matching price response.
+                          </p>
                         </div>
                       );
-                    })}
+                    })()}
+                  </div>
+
+                </motion.div>
+
+                {/* Competitor Positioning */}
+                <motion.div className="bg-white border border-zinc-200 rounded-md p-5"
+                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.24 }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="font-semibold text-zinc-900 text-sm">Competitor Positioning</div>
+                    <SectionInfo text="Price vs. estimated volume scatter for your product (blue), the 3 closest KNN analogs (grey), and the competitor you entered (red). Top-left = high volume at low price (strong position). Hover each dot for details." />
+                    <div className="ml-auto flex items-center gap-4 shrink-0">
+                      {[{c:'#94a3b8',l:'Analogs'},{c:'#1d4ed8',l:form.name},{...(res.compGap ? {c:'#dc2626',l:'Competitor'} : null)}].filter(Boolean).map(({c,l})=>(
+                        <div key={l} className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ background:c }} />
+                          <span className="text-xs text-zinc-500 truncate max-w-[90px]">{l}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <CompetitorChart
+                    topAnalogs={res.topAnalogs}
+                    newPrice={res.newPrice}
+                    predictedTotal={res.predictedTotal}
+                    compPrice={form.competitorPrice ? parseFloat(form.competitorPrice) : null}
+                    elasticity={res.elasticity}
+                    channelMult={res.channelMult}
+                    baseline={res.baseline}
+                    productName={form.name}
+                  />
+                </motion.div>
+
+                {/* Price Sensitivity — Interactive Slider */}
+                <motion.div className="bg-white border border-zinc-200 rounded-md p-5"
+                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.27 }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="font-semibold text-zinc-900 text-sm">Price Sensitivity Explorer</div>
+                    <SectionInfo text="Drag the slider to simulate any price and see volume and revenue update instantly. Uses category-specific elasticity — Food & Beverage (−0.65) reacts more sharply than Electronics (−0.22)." />
+                  </div>
+                  {/* Revenue-maximising price callout */}
+                  {(() => {
+                    const optPrice = parseFloat((res.baseline.basePrice * (1 - 1 / (2 * res.elasticity))).toFixed(2));
+                    const clampedOpt = Math.max(res.newPrice * 0.5, Math.min(res.newPrice * 2, optPrice));
+                    const optVol  = Math.max(1, Math.round(res.baseline.baseSales * Math.pow(clampedOpt / res.baseline.basePrice, res.elasticity) * res.channelMult));
+                    const optRev  = Math.round(optVol * clampedOpt);
+                    const currentRev = res.projectedRevenue;
+                    const uplift = Math.round((optRev / currentRev - 1) * 100);
+                    if (uplift <= 2) return null;
+                    return (
+                      <div className="mb-4 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-md px-4 py-2.5">
+                        <Zap className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                        <div className="text-xs text-blue-700">
+                          <span className="font-semibold">Revenue-optimal price: {clampedOpt.toFixed(2)} AZN</span>
+                          <span className="ml-2 opacity-70">→ +{uplift}% revenue vs. your current price</span>
+                        </div>
+                        <button onClick={() => setLivePrice(clampedOpt)}
+                          className="ml-auto text-xs text-blue-700 font-semibold border border-blue-300 rounded px-2 py-0.5 hover:bg-blue-100 transition-colors shrink-0">
+                          Apply
+                        </button>
+                      </div>
+                    );
+                  })()}
+                  <div className="grid grid-cols-2 gap-6 items-start">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-zinc-400">Simulated Price</span>
+                        <span className="text-xl font-black text-blue-700">{livePrice.toFixed(2)} <span className="text-sm font-medium text-zinc-400">AZN</span></span>
+                      </div>
+                      <input
+                        type="range"
+                        min={Math.max(0.01, res.newPrice * 0.4)}
+                        max={res.newPrice * 1.8}
+                        step={0.01}
+                        value={livePrice}
+                        onChange={e => setLivePrice(parseFloat(e.target.value))}
+                        className="w-full accent-blue-700 cursor-pointer"
+                      />
+                      <div className="flex justify-between text-xs text-zinc-300 mt-1.5">
+                        <span>−60%</span>
+                        <span className="text-zinc-400">Original: {res.newPrice.toFixed(2)} AZN</span>
+                        <span>+80%</span>
+                      </div>
+                      {/* Reference points */}
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        {res.sensitivityScenarios.map((s, i) => (
+                          <button key={i}
+                            onClick={() => setLivePrice(s.price)}
+                            className={`text-xs py-1 rounded border transition-colors ${Math.abs(livePrice - s.price) < 0.005 ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium' : 'border-zinc-200 text-zinc-400 hover:border-zinc-300 hover:text-zinc-600'}`}>
+                            {i === 0 ? '−10%' : i === 2 ? '+10%' : 'Original'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="text-center">
+                          <div className="text-xs text-zinc-400 mb-1">Volume</div>
+                          <div className="text-2xl font-black text-zinc-900 leading-none">{liveVolume.toLocaleString()}</div>
+                          <div className={`text-xs font-semibold mt-0.5 ${liveDiff > 0 ? 'text-green-600' : liveDiff < 0 ? 'text-red-600' : 'text-zinc-400'}`}>
+                            {liveDiff > 0 ? '+' : ''}{liveDiff.toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-zinc-400 mb-1">Revenue</div>
+                          <div className="text-2xl font-black text-zinc-900 leading-none">{liveRevenue >= 1000 ? `${(liveRevenue/1000).toFixed(1)}k` : liveRevenue}</div>
+                          <div className="text-xs text-zinc-400 mt-0.5">AZN/mo</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-zinc-400 mb-1">Price Δ</div>
+                          <div className={`text-2xl font-black leading-none ${livePrice === res.newPrice ? 'text-zinc-400' : livePrice > res.newPrice ? 'text-red-600' : 'text-green-600'}`}>
+                            {livePrice === res.newPrice ? '—' : `${livePrice > res.newPrice ? '+' : ''}${((livePrice / res.newPrice - 1) * 100).toFixed(0)}%`}
+                          </div>
+                          <div className="text-xs text-zinc-400 mt-0.5">from original</div>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs text-zinc-400 mb-0.5">
+                          <span>Volume vs. original</span>
+                          <span className="font-mono">{liveVolume.toLocaleString()} / {res.predictedTotal.toLocaleString()}</span>
+                        </div>
+                        <div className="h-1.5 bg-zinc-100 rounded-sm overflow-hidden">
+                          <div className="h-full bg-blue-700 rounded-sm transition-all duration-75"
+                            style={{ width:`${Math.min(100, Math.round(liveVolume / Math.max(liveVolume, res.predictedTotal) * 100))}%` }} />
+                        </div>
+                        <div className="h-1.5 bg-zinc-100 rounded-sm overflow-hidden">
+                          <div className="h-full bg-zinc-300 rounded-sm"
+                            style={{ width:`${Math.min(100, Math.round(res.predictedTotal / Math.max(liveVolume, res.predictedTotal) * 100))}%` }} />
+                        </div>
+                        <div className="flex justify-between text-xs text-zinc-300">
+                          <span className="text-blue-700">Simulated</span><span>Original</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
 
@@ -1445,30 +1948,59 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Attribute Contributions */}
+                  {/* Forecast Attribution */}
                   <div className="bg-white border border-zinc-200 rounded-md p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="font-semibold text-zinc-900 text-sm">Attribute Contribution</div>
-                      <SectionInfo text="Breakdown of which 6 product attributes matched the top analog. Full bar = matched (score gained). Faint 'no match' = attribute differs. More matched attributes = more accurate demand forecast." />
+                      <div className="font-semibold text-zinc-900 text-sm">Forecast Attribution</div>
+                      <SectionInfo text="Shows exactly how your predicted volume was built. Starts from the KNN analog's real baseline sales, then applies a price elasticity adjustment (category-specific), then a channel multiplier. Each row shows the actual units added or removed." />
                     </div>
-                    <div className="space-y-2.5">
-                      {res.contributions.map(c => (
-                        <div key={c.attr}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-zinc-500">{c.attr}</span>
-                            <div className="flex items-center gap-1.5">
-                              {c.pts === 0 && <span className="text-xs text-zinc-300 italic">no match</span>}
-                              <span className={`text-xs font-semibold ${c.pts > 0 ? 'text-blue-700' : 'text-zinc-300'}`}>
-                                +{c.pts}/{c.max}
-                              </span>
+                    <div className="space-y-3">
+                      {[
+                        {
+                          label:  'KNN Baseline',
+                          sub:    `${res.baseline.name} · ${res.matchScore}pt match`,
+                          value:  res.forecastAttribution.baseline,
+                          effect: res.forecastAttribution.baseline,
+                          bar:    'bg-zinc-400',
+                          sign:   '',
+                        },
+                        {
+                          label:  'Price Effect',
+                          sub:    `${res.priceGapPercent > 0 ? '+' : ''}${res.priceGapPercent.toFixed(1)}% vs analog · elasticity ${res.elasticity}`,
+                          value:  Math.abs(res.forecastAttribution.priceEffect),
+                          effect: res.forecastAttribution.priceEffect,
+                          bar:    res.forecastAttribution.priceEffect >= 0 ? 'bg-green-500' : 'bg-red-400',
+                          sign:   res.forecastAttribution.priceEffect >= 0 ? '+' : '−',
+                        },
+                        {
+                          label:  'Channel Effect',
+                          sub:    `${res.channelLabel} · ×${res.channelMult.toFixed(2)}`,
+                          value:  Math.abs(res.forecastAttribution.channelEffect),
+                          effect: res.forecastAttribution.channelEffect,
+                          bar:    res.forecastAttribution.channelEffect > 0 ? 'bg-green-500' : res.forecastAttribution.channelEffect < 0 ? 'bg-red-400' : 'bg-zinc-200',
+                          sign:   res.forecastAttribution.channelEffect > 0 ? '+' : res.forecastAttribution.channelEffect < 0 ? '−' : '',
+                        },
+                      ].map(row => (
+                        <div key={row.label}>
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="min-w-0">
+                              <span className="text-xs font-medium text-zinc-700">{row.label}</span>
+                              <span className="text-xs text-zinc-400 ml-2 truncate">{row.sub}</span>
                             </div>
+                            <span className={`text-xs font-semibold font-mono ml-3 shrink-0 ${row.effect > 0 ? 'text-green-700' : row.effect < 0 ? 'text-red-600' : 'text-zinc-400'}`}>
+                              {row.effect !== 0 ? `${row.sign}${row.value.toLocaleString()}` : '×1.0'}
+                            </span>
                           </div>
-                          <div className="h-1 bg-zinc-100 rounded-sm">
-                            <div className={`h-full rounded-sm ${c.pts > 0 ? 'bg-blue-700' : 'bg-zinc-200'}`}
-                              style={{ width:`${c.pts > 0 ? 100 : 20}%`, opacity: c.pts > 0 ? 1 : 0.35 }} />
+                          <div className="h-1.5 bg-zinc-100 rounded-sm overflow-hidden">
+                            <div className={`h-full rounded-sm ${row.bar}`}
+                              style={{ width:`${Math.min(100, Math.round(row.value / res.forecastAttribution.total * 100))}%` }} />
                           </div>
                         </div>
                       ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-zinc-100 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-zinc-700">Predicted Total</span>
+                      <span className="text-sm font-black text-zinc-900">{res.forecastAttribution.total.toLocaleString()} <span className="text-xs font-medium text-zinc-400">units/mo</span></span>
                     </div>
                   </div>
                 </motion.div>
@@ -1488,6 +2020,7 @@ export default function App() {
                       </div>
                       <Globe2 className="w-4 h-4 text-zinc-300" />
                     </div>
+                    <AzMapViz allocRows={res.allocRows} />
                     <DispatchMatrix rows={res.allocRows} />
                   </div>
 
@@ -1558,6 +2091,18 @@ export default function App() {
                   </div>
                 </motion.div>
 
+                {/* Launch Timeline */}
+                <motion.div className="bg-white border border-zinc-200 rounded-md p-5"
+                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.39 }}>
+                  <div className="flex items-center gap-2 mb-5">
+                    <Clock className="w-4 h-4 text-blue-700" />
+                    <div className="font-semibold text-zinc-900 text-sm">Launch Roadmap</div>
+                    <SectionInfo text="8-week milestone plan from analysis submission to live sales monitoring. Category review takes 3 business days. First order delivery lead time varies by storage type (2–4 weeks)." />
+                    <span className="text-xs text-zinc-400 ml-1">· Est. 8 weeks to shelf</span>
+                  </div>
+                  <LaunchTimeline />
+                </motion.div>
+
                 {/* Financing Intelligence */}
                 <motion.div className="bg-white border border-zinc-200 rounded-md p-5"
                   initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.40 }}>
@@ -1611,6 +2156,34 @@ export default function App() {
                     <span className="text-xs text-zinc-500">Shelf Placement:</span>
                     <span className="text-xs font-medium text-zinc-700">{res.shelfPlacement}</span>
                   </div>
+                  <div className="mt-3 pt-3 border-t border-zinc-100">
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <ClipboardList className="w-3.5 h-3.5 text-zinc-400" />
+                      <span className="text-xs font-medium text-zinc-600">Pre-Application Checklist</span>
+                      <span className="text-xs text-zinc-400 ml-auto">
+                        {Object.values(checklist).filter(Boolean).length}/{READINESS_ITEMS.length} ready
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                      {READINESS_ITEMS.map(item => (
+                        <div key={item.id} onClick={() => toggleCheck(item.id)}
+                          className="flex items-center gap-2 cursor-pointer group select-none">
+                          <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            checklist[item.id] ? 'bg-blue-700 border-blue-700' : 'border-zinc-200 group-hover:border-blue-300'
+                          }`}>
+                            {checklist[item.id] && (
+                              <svg viewBox="0 0 10 10" className="w-2 h-2" fill="none">
+                                <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={`text-xs transition-colors ${checklist[item.id] ? 'line-through text-zinc-300' : 'text-zinc-600 group-hover:text-zinc-800'}`}>
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </motion.div>
 
                 {/* CTA */}
@@ -1631,6 +2204,280 @@ export default function App() {
           );
         })()}
 
+        {/* ── Scenario Compare ── */}
+        {screen === SCREENS.COMPARE && (() => {
+          const scenarios = savedScenarios.map(s => {
+            try { return { label: s.label, form: s.form, r: computeResults(s.form) }; }
+            catch { return null; }
+          }).filter(Boolean);
+
+          const ROWS = [
+            { label:'Launch Score',     key: r => r.launchScore.total,                                  fmt: (v)    => `${v}/100`,                                                         bestHigh: true  },
+            { label:'Verdict',          key: r => r.launchScore.verdict,                                fmt: (v)    => v,                                                                  bestHigh: null  },
+            { label:'Volume / month',   key: r => r.predictedTotal,                                     fmt: (v)    => v.toLocaleString() + ' units',                                      bestHigh: true  },
+            { label:'Revenue / month',  key: r => r.projectedRevenue,                                   fmt: (v)    => v.toLocaleString() + ' AZN',                                        bestHigh: true  },
+            { label:'Confidence',       key: r => r.confidence,                                         fmt: (v)    => `${v}%`,                                                            bestHigh: true  },
+            { label:'Risk Level',       key: r => ({ HIGH:0, MEDIUM:1, LOW:2 })[r.riskLevel.label]??1, fmt: (_,r)  => r.riskLevel.label,                                                  bestHigh: true  },
+            { label:'Working Capital',  key: r => r.workingCapital,                                     fmt: (v)    => v.toLocaleString() + ' AZN',                                        bestHigh: false },
+            { label:'Breakeven',        key: r => r.breakevenMonth > 0 && r.breakevenMonth <= 6 ? r.breakevenMonth : 7, fmt: (_,r) => r.breakevenMonth > 0 && r.breakevenMonth <= 6 ? `M${r.breakevenMonth}` : 'M6+', bestHigh: false },
+            { label:'Partnership Tier', key: r => r.financingProduct.name,                              fmt: (v)    => v,                                                                  bestHigh: null  },
+            { label:'KNN Analog',       key: r => r.baseline.name,                                      fmt: (v)    => v,                                                                  bestHigh: null  },
+            { label:'Price vs Analog',  key: r => Math.abs(r.priceGapPercent),                          fmt: (_,r)  => `${r.priceGapPercent > 0 ? '+' : ''}${r.priceGapPercent.toFixed(1)}%`, bestHigh: false },
+          ];
+
+          const cols = `180px repeat(${scenarios.length}, 1fr)`;
+
+          return (
+            <motion.div key="compare" className="min-h-screen bg-zinc-50" {...FADE}>
+              <div className="bg-white border-b border-zinc-200 h-12 px-5 flex items-center justify-between sticky top-0 z-20">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setScreen(SCREENS.DASH)}
+                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 transition-colors text-sm">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                  <div className="w-px h-4 bg-zinc-200" />
+                  <Logo />
+                </div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="text-sm font-semibold text-zinc-900">Scenario Comparison</span>
+                  <span className="text-xs text-zinc-400">· {scenarios.length} saved scenario{scenarios.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div />
+              </div>
+
+              <div className="max-w-5xl mx-auto px-5 py-5">
+                {scenarios.length < 2 ? (
+                  <div className="bg-white border border-zinc-200 rounded-md p-12 text-center">
+                    <Bookmark className="w-8 h-8 text-zinc-200 mx-auto mb-3" />
+                    <p className="text-sm text-zinc-500 font-medium">Save at least 2 scenarios to compare</p>
+                    <p className="text-xs text-zinc-300 mt-1">Use "Save" on the dashboard after each analysis run</p>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-zinc-200 rounded-md overflow-hidden">
+
+                    {/* Scenario header row */}
+                    <div className="grid border-b border-zinc-200" style={{ gridTemplateColumns: cols }}>
+                      <div className="px-5 py-3 bg-zinc-50 border-r border-zinc-100" />
+                      {scenarios.map((s, i) => {
+                        const lvl = s.r.launchScore.level;
+                        const numCls = lvl === 'strong' ? 'text-green-700' : lvl === 'moderate' ? 'text-amber-700' : 'text-red-600';
+                        return (
+                          <div key={i} className="px-5 py-3 border-l border-zinc-100 first:border-l-0">
+                            <div className="text-sm font-bold text-zinc-900 truncate">{s.label}</div>
+                            <div className={`text-xs font-semibold ${numCls}`}>{s.r.launchScore.verdict}</div>
+                            <div className="text-xs text-zinc-400 mt-0.5">{s.form.category} · {s.form.tier} · {s.form.region}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Data rows */}
+                    {ROWS.map((row, ri) => {
+                      const vals = scenarios.map(s => row.key(s.r));
+                      const nums = vals.filter(v => typeof v === 'number');
+                      const best  = row.bestHigh === true ? Math.max(...nums) : row.bestHigh === false ? Math.min(...nums) : null;
+                      const worst = row.bestHigh === true ? Math.min(...nums) : row.bestHigh === false ? Math.max(...nums) : null;
+                      return (
+                        <div key={row.label}
+                          className={`grid border-b border-zinc-100 last:border-b-0 ${ri % 2 === 0 ? '' : 'bg-zinc-50/40'}`}
+                          style={{ gridTemplateColumns: cols }}>
+                          <div className="px-5 py-3 border-r border-zinc-100 flex items-center bg-zinc-50/60">
+                            <span className="text-xs font-medium text-zinc-500">{row.label}</span>
+                          </div>
+                          {scenarios.map((s, ci) => {
+                            const val = vals[ci];
+                            const isBest  = row.bestHigh !== null && typeof val === 'number' && val === best;
+                            const isWorst = row.bestHigh !== null && typeof val === 'number' && val === worst && best !== worst;
+                            return (
+                              <div key={ci} className={`px-5 py-3 border-l border-zinc-100 ${isBest ? 'bg-green-50' : isWorst ? 'bg-red-50' : ''}`}>
+                                <span className={`text-sm font-semibold ${isBest ? 'text-green-700' : isWorst ? 'text-red-600' : 'text-zinc-800'}`}>
+                                  {row.fmt(val, s.r)}
+                                </span>
+                                {isBest  && <span className="ml-2 text-xs text-green-500 font-medium">best</span>}
+                                {isWorst && <span className="ml-2 text-xs text-red-400 font-medium">lowest</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })()}
+
+        {/* ── Category Manager ── */}
+        {screen === SCREENS.MANAGER && (() => {
+          const statusCfg = {
+            pending:    { label:'Pending',    cls:'bg-blue-50 text-blue-700 border-blue-200'   },
+            approved:   { label:'Approved',   cls:'bg-green-50 text-green-700 border-green-200' },
+            needs_info: { label:'Needs Info', cls:'bg-amber-50 text-amber-700 border-amber-200' },
+            rejected:   { label:'Rejected',   cls:'bg-red-50 text-red-700 border-red-200'       },
+          };
+          const counts = {
+            all:        submissions.length,
+            pending:    submissions.filter(s => s.status === 'pending').length,
+            approved:   submissions.filter(s => s.status === 'approved').length,
+            needs_info: submissions.filter(s => s.status === 'needs_info').length,
+            rejected:   submissions.filter(s => s.status === 'rejected').length,
+          };
+          const filtered = managerFilter === 'all' ? submissions : submissions.filter(s => s.status === managerFilter);
+          return (
+            <motion.div key="manager" className="min-h-screen bg-zinc-50" {...FADE}>
+              {/* Navbar */}
+              <div className="bg-white border-b border-zinc-200 h-12 px-5 flex items-center justify-between sticky top-0 z-20">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setScreen(SCREENS.DASH)}
+                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 transition-colors text-sm">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                  <div className="w-px h-4 bg-zinc-200" />
+                  <Logo />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="text-sm font-semibold text-zinc-900">Category Manager</span>
+                  <span className="text-xs text-zinc-400 ml-1">· Vendor Submissions</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-400">{submissions.length} total submission{submissions.length !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
+
+              <div className="max-w-7xl mx-auto px-5 py-5 space-y-4">
+
+                {/* Stat cards */}
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { label:'Total',      count: counts.all,        icon: ClipboardList, cls:'text-zinc-700' },
+                    { label:'Pending',    count: counts.pending,     icon: Clock,         cls:'text-blue-700' },
+                    { label:'Approved',   count: counts.approved,    icon: CheckCircle,   cls:'text-green-700' },
+                    { label:'Needs Info', count: counts.needs_info,  icon: AlertTriangle, cls:'text-amber-600' },
+                  ].map(({ label, count, icon: Icon, cls }) => (
+                    <motion.div key={label}
+                      className="bg-white border border-zinc-200 rounded-md p-5"
+                      initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.05 }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon className={`w-3.5 h-3.5 ${cls}`} />
+                        <span className="text-xs text-zinc-400">{label}</span>
+                      </div>
+                      <div className={`text-3xl font-black ${cls}`}>{count}</div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Filter tabs + table */}
+                <motion.div className="bg-white border border-zinc-200 rounded-md overflow-hidden"
+                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.10 }}>
+
+                  {/* Tabs */}
+                  <div className="flex border-b border-zinc-200 px-4 pt-1">
+                    {[
+                      { key:'all',        label:`All (${counts.all})` },
+                      { key:'pending',    label:`Pending (${counts.pending})` },
+                      { key:'approved',   label:`Approved (${counts.approved})` },
+                      { key:'needs_info', label:`Needs Info (${counts.needs_info})` },
+                      { key:'rejected',   label:`Rejected (${counts.rejected})` },
+                    ].map(tab => (
+                      <button key={tab.key}
+                        onClick={() => setManagerFilter(tab.key)}
+                        className={`text-xs font-medium px-3 py-2.5 border-b-2 transition-colors ${
+                          managerFilter === tab.key
+                            ? 'border-blue-700 text-blue-700'
+                            : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                        }`}>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Table */}
+                  {filtered.length === 0 ? (
+                    <div className="py-16 flex flex-col items-center justify-center">
+                      <ClipboardList className="w-8 h-8 text-zinc-200 mb-3" />
+                      <p className="text-sm text-zinc-400 font-medium">No submissions yet</p>
+                      <p className="text-xs text-zinc-300 mt-1">
+                        {managerFilter === 'all'
+                          ? 'Vendors submit via "Request Vendor Listing" on the dashboard'
+                          : `No ${statusCfg[managerFilter]?.label.toLowerCase()} submissions`}
+                      </p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-100">
+                          {['Product', 'Category', 'Score', 'Volume', 'Risk', 'Submitted', 'Status', ''].map(h => (
+                            <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-zinc-400 whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map((sub, i) => {
+                          const sc = statusCfg[sub.status] || statusCfg.pending;
+                          const riskCls =
+                            sub.metrics?.riskLevel === 'high'   ? 'text-red-600'
+                            : sub.metrics?.riskLevel === 'medium' ? 'text-amber-600'
+                            : 'text-green-600';
+                          const scoreCls =
+                            (sub.metrics?.score || 0) >= 75 ? 'text-green-700'
+                            : (sub.metrics?.score || 0) >= 50 ? 'text-amber-700'
+                            : 'text-red-600';
+                          const ts = sub.timestamp ? new Date(sub.timestamp) : null;
+                          const dateStr = ts ? `${ts.getDate()}/${ts.getMonth()+1}/${String(ts.getFullYear()).slice(2)}` : '—';
+                          return (
+                            <tr key={sub.id} className={`border-b border-zinc-50 hover:bg-zinc-50 transition-colors ${i % 2 === 0 ? '' : 'bg-zinc-50/40'}`}>
+                              <td className="px-4 py-3">
+                                <div className="font-medium text-zinc-900 text-xs">{sub.form?.name || '—'}</div>
+                                <div className="text-xs text-zinc-400 mt-0.5 font-mono">{sub.id}</div>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap">{sub.form?.category || '—'}</td>
+                              <td className="px-4 py-3">
+                                <span className={`text-sm font-black ${scoreCls}`}>{sub.metrics?.score ?? '—'}</span>
+                                <span className="text-xs text-zinc-300 ml-0.5">/100</span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-zinc-700 font-mono whitespace-nowrap">
+                                {sub.metrics?.volume?.toLocaleString() ?? '—'}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`text-xs font-semibold ${riskCls}`}>{sub.metrics?.risk || '—'}</span>
+                              </td>
+                              <td className="px-4 py-3 text-xs text-zinc-400 whitespace-nowrap">{dateStr}</td>
+                              <td className="px-4 py-3">
+                                <select
+                                  value={sub.status}
+                                  onChange={e => updateSubmissionStatus(sub.id, e.target.value)}
+                                  className={`text-xs font-medium border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-700 cursor-pointer ${sc.cls}`}>
+                                  <option value="pending">Pending</option>
+                                  <option value="approved">Approved</option>
+                                  <option value="needs_info">Needs Info</option>
+                                  <option value="rejected">Rejected</option>
+                                </select>
+                              </td>
+                              <td className="px-4 py-3">
+                                <button
+                                  onClick={() => reviewSubmission(sub)}
+                                  disabled={!sub.form}
+                                  className="text-xs text-blue-700 font-semibold hover:underline disabled:opacity-30 disabled:no-underline whitespace-nowrap">
+                                  Review →
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </motion.div>
+
+              </div>
+            </motion.div>
+          );
+        })()}
+
       </AnimatePresence>
 
       <AnimatePresence>
@@ -1639,8 +2486,96 @@ export default function App() {
             product={res.financingProduct}
             workingCapital={res.workingCapital}
             onClose={() => setModal(false)}
+            onSubmit={addSubmission}
+            vendorForm={form}
+            results={res}
           />
         )}
+        {replyModal && (() => {
+          const { sub, status } = replyModal;
+          const isApproved = status === 'approved';
+          const product = sub.form?.name || 'your product';
+          const vendor  = sub.vendor  || 'Vendor';
+          const subject = isApproved
+            ? `Your Bravo vendor application is approved — ${product}`
+            : `Additional information needed — ${product}`;
+          const body = isApproved
+            ? `Dear ${vendor},
+
+We are pleased to confirm that ${product} has been approved for listing in Bravo stores.
+
+Launch Score: ${sub.metrics?.score}/100 — ${sub.metrics?.verdict}
+Forecast: ${sub.metrics?.volume?.toLocaleString()} units/month · ${sub.metrics?.revenue?.toLocaleString()} AZN/month
+Partnership tier: ${sub.form ? computeResults(sub.form).financingProduct.name : '—'}
+
+Your Bravo category contact will reach out within 3 business days to discuss shelf planogram, first order quantity, and the onboarding timeline.
+
+Reference: ${sub.id}
+
+Best regards,
+Bravo Category Management Team`
+            : `Dear ${vendor},
+
+Thank you for submitting ${product} for Bravo listing consideration.
+
+Our category team requires the following documents before proceeding:
+• Product certifications (Halal / food safety / import permits as applicable)
+• Confirmed minimum order quantity and unit cost breakdown
+• Hi-resolution product images and Azerbaijani-language label
+• Company registration certificate
+
+Please reply with these documents within 14 days or your application will expire.
+
+Reference: ${sub.id}
+
+Best regards,
+Bravo Category Management Team`;
+
+          return (
+            <motion.div
+              className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4"
+              initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+              onClick={e => e.target === e.currentTarget && setReplyModal(null)}
+            >
+              <motion.div
+                className="bg-white rounded-md border border-zinc-200 p-6 max-w-lg w-full shadow-lg"
+                initial={{ scale:0.97, opacity:0, y:8 }} animate={{ scale:1, opacity:1, y:0 }}
+                exit={{ scale:0.97, opacity:0, y:8 }} transition={{ duration:0.18 }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className={`text-xs font-semibold px-2 py-0.5 rounded border mb-2 inline-block ${isApproved ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                      {isApproved ? 'Approved' : 'Needs Info'}
+                    </div>
+                    <h3 className="text-base font-bold text-zinc-900">Draft Reply</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">Auto-generated template · edit before sending</p>
+                  </div>
+                  <button onClick={() => setReplyModal(null)} className="text-zinc-400 hover:text-zinc-600 p-1 -mt-1 -mr-1">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="bg-zinc-50 border border-zinc-200 rounded-md px-3 py-2 mb-3">
+                  <div className="text-xs text-zinc-400 mb-0.5">Subject</div>
+                  <div className="text-xs font-medium text-zinc-800">{subject}</div>
+                </div>
+                <pre className="text-xs text-zinc-600 leading-relaxed whitespace-pre-wrap bg-zinc-50 border border-zinc-200 rounded-md p-3 mb-4 max-h-60 overflow-y-auto font-sans">
+                  {body}
+                </pre>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`).catch(() => {})}
+                    className="flex-1 bg-zinc-900 text-white font-semibold py-2 rounded-md hover:bg-zinc-800 transition-colors text-xs">
+                    Copy to Clipboard
+                  </button>
+                  <button onClick={() => setReplyModal(null)}
+                    className="px-4 py-2 border border-zinc-200 rounded-md text-xs text-zinc-500 hover:text-zinc-700 transition-colors">
+                    Close
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );
